@@ -7,7 +7,7 @@ class Population:
         self.phenotypes = []
         self.current = None
         self.current_generation = -1
-    
+
     def create_first_generation(self, size):
         for i in range(0, size):
             ph = Phenotype(i)
