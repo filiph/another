@@ -64,7 +64,7 @@ for obj in bpy.data.objects:
       # Set Scenes camera and output filename 
       bpy.data.scenes[sceneKey].camera = obj 
       #bpy.data.scenes[sceneKey].render.file_format = 'JPEG' 
-      bpy.data.scenes[sceneKey].render.filepath = '//' + ph.get_binary_string() + "_camera_" + str(c)
+      bpy.data.scenes[sceneKey].render.filepath = '//generation' + str(ph.generation) + "/" + ph.get_binary_string()# + "_camera_" + str(c)
 
       # Render Scene and store the scene 
       bpy.ops.render.render( write_still=True ) 
