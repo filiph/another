@@ -1,0 +1,1 @@
+/Applications/Blender/blender.app/Contents/MacOS/blender -b $1 -P /Users/filiph/dev/blender/rendercameras.py
