@@ -38,6 +38,12 @@ if dna == "":
 else:
     ph.set_from_dna(dna)
 
+path = '//generation' + str(ph.generation) + "/" + ph.get_binary_string()  # + "_camera_" + str(c)
+for arg in sys.argv:
+    words = arg.split('=')
+    if (words[0] == "out"):
+        path = words[1]
+
 print('Rendering phenotype with dna ' + ph.get_binary_string())
 
 print('\nPrint Scenes...') 
@@ -64,7 +70,7 @@ for obj in bpy.data.objects:
       # Set Scenes camera and output filename 
       bpy.data.scenes[sceneKey].camera = obj 
       #bpy.data.scenes[sceneKey].render.file_format = 'JPEG' 
-      bpy.data.scenes[sceneKey].render.filepath = '//generation' + str(ph.generation) + "/" + ph.get_binary_string()# + "_camera_" + str(c)
+      bpy.data.scenes[sceneKey].render.filepath = path
 
       # Render Scene and store the scene 
       bpy.ops.render.render( write_still=True ) 

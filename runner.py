@@ -2,153 +2,158 @@
 
 import pygame
 from pygame import *
-from pygame.mixer import *
 from pygame.locals import *
 import os
 import sys
 from random import choice
+import pickle
+import subprocess
+import time
 
-imageTypes = ['.jpg', '.jpeg', '.png']
-audioTypes = ['.ogg', '.mp3']
+from slideshow import getFilePaths, rationalSizer, tran_none, imageTypes
 
-def getFilePaths(path, fileTypes, recursive=True):
-    ## Returns list containing paths of files in /path/ that are of a file type in /fileTypes/,
-    ##    if /recursive/ is False subdirectories are not checked.
-    paths = []
-    if recursive:
-        for root, folders, files in os.walk(path, followlinks=True):
-            for file in files:
-                for fileType in fileTypes:
-                    if file.endswith(fileType):
-                        paths.append(os.path.join(root, file))
+from population import *
+
+RESOLUTION = (800, 600)
+PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
+PATH_TO_POP_DUMP = PATH_TO_SCRIPT + "/population.dump"
+PATH_TO_RENDER_SH = PATH_TO_SCRIPT + "/dnarender.sh"
+
+GENERATION_SIZE = 5
+
+def load_pop_from_file():
+    try:
+        with open(PATH_TO_POP_DUMP, "rb") as f:
+            pop = pickle.load(f)
+            print("Population loaded from " + PATH_TO_POP_DUMP)
+    except IOError:
+        print("Population file not found. Creating first generation.")
+        pop = Population()
+        pop.create_first_generation(GENERATION_SIZE)
+        for ph in pop.phenotypes:
+            start_image_render(ph)
+        while check_image_renders() > 0:
+            print("Waiting for render of first batch to end")
+            time.sleep(1)
+    return pop
+
+
+RENDER_TIMEOUT = 60
+MAX_PARALLEL_RENDERS = 2
+running_procs = []
+render_backlog = []
+
+def start_image_render(ph):
+    if check_image_available(ph):
+        return
+    if check_image_renders() <= MAX_PARALLEL_RENDERS:
+        try:
+            FNULL = open(os.devnull, 'w')
+            # TODO: set render resolution according to fullscreen resolution
+            proc = subprocess.Popen([PATH_TO_RENDER_SH, ph.get_binary_string(), get_phenotype_image_path(ph)],
+                    stdout=FNULL)
+                    #stderr=subprocess.PIPE
+            running_procs.append(proc)
+        except OSError as e:
+            print(str(e))
+            raise
     else:
-        for item in os.listdir(path):
-            for fileType in fileTypes:
-                if item.endswith(fileType):
-                    paths.append(os.path.join(root, item))
-    return paths
+        render_backlog.append(ph)
 
-def rationalSizer(image, area):
-    ## Returns /image/ resized for /area/ maintaining origional aspect ratio.
-    ## Returns tuple containing x and y displacement to center resized /image/ correctly on /area/.
-    # TODO: check if necessary first
-    width = float(image.get_width())
-    height = float(image.get_height())
-    xSizer = width / area[0]
-    ySizer = height / area[1]
-    if xSizer >= ySizer:
-        sizer = xSizer
-        yDisplace = int((area[1] - height/xSizer) / 2)
-        xDisplace = 0
-    else:
-        sizer = ySizer
-        xDisplace = int((area[0] - width/ySizer) / 2)
-        yDisplace = 0
-    return pygame.transform.scale(image, (int(width/sizer),int(height/sizer))), (xDisplace, yDisplace)
+def check_image_renders():
+    """ Checks the status of background image renders. Returns number of running processes. """
+    count = 0
+    for proc in running_procs:
+        retcode = proc.poll()
+        if retcode is not None:  # process finished
+            running_procs.remove(proc)
+            if retcode != 0:
+                print("ERROR: Render process failed")
+                print(proc.stderr)
+                # TODO: do something about it
+            if render_backlog:
+                start_image_render(render_backlog.pop(0))
+        else:  # process still running
+            count += 1
+    return count
 
-def run(resolution=(400,300), fullscreen=True, path=os.environ['HOME']+'/Pictures/', recursive=True,
-        mpath=os.environ['HOME']+'/Music/', order=False, delay=5, transition='None'):
-    ## Main Function
-    ## Runs a slideshow based on parameters given.
+
+def save_pop_to_file(pop):
+    print("Trying to save population...")
+    try:
+        with open(PATH_TO_POP_DUMP, "wb") as f:
+            pickle.dump(pop, f)
+            print("Population saved to " + PATH_TO_POP_DUMP)
+    except IOError:
+        print("ERROR: Couldn't write population to file.")
+        raise
+
+def get_phenotype_image_path(ph):
+    # TODO: better
+    return PATH_TO_SCRIPT + "/generation" + str(ph.generation) + "/" + ph.get_binary_string() + ".jpg"
+
+def check_image_available(ph):
+    # TODO: check against a list (cached)
+    return os.path.isfile(get_phenotype_image_path(ph))
+
+
+## START HERE ##
+def run(resolution=RESOLUTION, fullscreen=True, path=PATH_TO_SCRIPT,
+        recursive=True, order=False, delay=5):
+    # Initialize the population
+    pop = load_pop_from_file()
+
+    ## Initialize PyGame
     pygame.display.init()
     if fullscreen:
         resolution = pygame.display.list_modes()[0]
         main_surface = pygame.display.set_mode(resolution, pygame.FULLSCREEN)
     else:
         main_surface = pygame.display.set_mode(resolution)
-    # main_surface.blit(pygame.image.load('/usr/share/pypicslideshow/img/loadingimages.png'), (100,50))
     pygame.display.update()
-    images = getFilePaths(path, imageTypes, recursive=recursive)
-    if not len(images) > 0:
-        print('\n####  Error: No images found. Exiting!\n')
-        sys.exit(1)
-    if not mpath == 'None':
-        main_surface.fill((0, 0, 0))
-        # main_surface.blit(pygame.image.load('/usr/share/pypicslideshow/img/loadingmusic.png'), (100,50))
-        pygame.display.update()
-        music = getFilePaths(mpath, audioTypes, recursive=True)
-        if not len(music) > 0:
-            print('\n##  Warning: No music found. Continuing without music...')
-    else:
-        music = []
-    i = 0
-    ip = -1
-    musicc = 0
-    delay = delay * 1000
-    if not delay > 0:
-        print('\n##  Warning: Delay too short. Continuing with delay of 10s...')
-        delay = 10000
-#     if transition not in libtrans.transitions.keys():
-#         print('\n##  Warning: ' + transition + ' is not a valid transition. Continuing with no transition...')
-#         transition = 'None'
-    pygame.time.set_timer(pygame.USEREVENT + 1, delay) # TODO: reset timer every time user makes choice
-    TRACK_END = USEREVENT + 2
-    if len(music) > 0:
-        pygame.mixer.init()
-        if order:
-            song = music[musicc]
-        else:
-            song = choice(music)
-        print('\nPlaying:   ' + song)
-        pygame.mixer.music.load(song)
-        pygame.mixer.music.play()
-        pygame.mixer.music.set_endevent(TRACK_END)
-
+    # images = getFilePaths(path, imageTypes, recursive=recursive)
+    # if not len(images) > 0:
+    #     print('\n####  Error: No images found. Exiting!\n')
+    #     sys.exit(1)
+    #     # TODO: don't exit - create images instead
+    # i = 0
+    # ip = -1
+    # delay = delay * 1000
+    # if not delay > 0:
+    #     print('\n##  Warning: Delay too short. Continuing with delay of 10s...')
+    #     delay = 10000
+    # pygame.time.set_timer(pygame.USEREVENT + 1, delay) # TODO: reset timer every time user makes choice
+    show_phenotype_image(pop.current, resolution, main_surface)
 
     while True:
         for event in pygame.event.get():
-            if (event.type == pygame.QUIT):
+            if (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
+                save_pop_to_file(pop)
                 pygame.quit()
                 return 0
-            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT):
-                i += 1
-                if i >= len(images):
-                    i = 0
-            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT):
-                i-=1
-                if i <= -1:
-                    i = len(images) - 1
-            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                pygame.quit()
-                return 0
-            elif event.type == pygame.USEREVENT + 1:
-                i += 1
-                if i >= len(images):
-                    i = 0
-            if event.type == TRACK_END:
-                if order:
-                    if musicc >= len(music) - 1:
-                        musicc = 0
-                    else:
-                        musicc += 1
-                    song = music[musicc]
-                else:
-                    song = choice(music)
-                print('\nPlaying:   ' + song)
-                pygame.mixer.music.load(song)
-                pygame.mixer.music.play()
-        if i != ip:
-            print('\nShowing:   ' + images[i])
-            blitdata = rationalSizer(pygame.image.load(images[i]), resolution)
-            main_surface = tran_none(main_surface, blitdata)
-            ip = i
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
+                pop.current.yes += 1
+                ph = pop.get_next(check_image_available)
+                show_phenotype_image(ph, resolution, main_surface)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                pop.current.no += 1
+                ph = pop.get_next(check_image_available)
+                show_phenotype_image(ph, resolution, main_surface)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                pop.current.meh += 1
+                ph = pop.get_next(check_image_available)
+                show_phenotype_image(ph, resolution, main_surface)
 
-def tran_none(mainSurface, blitdata):
-    mainSurface.fill((0, 0, 0))
-    mainSurface.blit(blitdata[0], blitdata[1])
-    pygame.display.update()
-    return mainSurface
+            # elif event.type == pygame.USEREVENT + 1:
+            #     i += 1
+            #     if i >= len(images):
+            #         i = 0
+            #     save_pop_to_file()
+
+def show_phenotype_image(ph, resolution, main_surface): # TODO: make into class
+    print("Showing phenotype " + ph.get_binary_string())
+    blitdata = rationalSizer(pygame.image.load(get_phenotype_image_path(ph)), resolution)
+    main_surface = tran_none(main_surface, blitdata)
 
 if __name__ == '__main__':
-    resolution = (800,600)
-    fullscreen = True
-    path = "/Users/filiph/dev/blender"
-    recursive = True
-    delay = 5
-    save = False
-    load = False
-    fake = False
-    order = False
-    music = "None"
-    transition = 'None'
-    run(resolution, fullscreen, path, recursive, music, order, delay, transition)
+    run()
