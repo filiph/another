@@ -52,9 +52,11 @@ class Runner:
     MAX_PARALLEL_RENDERS = 2
 
     def start_image_render(self, ph):
+        print("Start render of phenotype " + str(ph.idn))
         if self.check_image_available(ph):
+            print("- image already exists")
             return
-        if self.check_image_renders() <= Runner.MAX_PARALLEL_RENDERS:
+        if self.check_image_renders() < Runner.MAX_PARALLEL_RENDERS:
             try:
                 FNULL = open(os.devnull, 'w')
                 # TODO: set render resolution according to fullscreen resolution
@@ -62,10 +64,12 @@ class Runner:
                     self.get_phenotype_image_path(ph)], stdout=FNULL)
                         #stderr=subprocess.PIPE
                 self.running_procs.append(proc)
+                print("- process started")
             except OSError as e:
                 print(str(e))
                 raise
         else:
+            print("- too many processes running, added to backlog")
             self.render_backlog.append(ph)
 
     def check_image_renders(self):
@@ -147,6 +151,8 @@ class Runner:
                             child.mutate(0.1)
                             self.start_image_render(child)
 
+            pygame.time.wait(20)  # let the processor chill for a bit
+
 
                 # elif event.type == pygame.USEREVENT + 1:
                 #     i += 1
@@ -155,8 +161,8 @@ class Runner:
                 #     save_pop_to_file()
 
     def show_phenotype_image(self, ph):
-        print("Showing phenotype " + str(ph.idn) + " (gen " + str(ph.generation) +
-                ", dna " + ph.get_binary_string() + ")")
+        print("Showing phenotype " + str(ph.idn) + "\tgen " + str(ph.generation) +
+                "\tdna " + ph.get_binary_string() + "\ty/n " + str(ph.yes + ph.no))
         blitdata = rationalSizer(pygame.image.load(self.get_phenotype_image_path(ph)), self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
 
