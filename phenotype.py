@@ -64,6 +64,15 @@ class Phenotype:
                 assert(hasattr(parent_b, attr))
                 gene.set_from_mating(getattr(parent_a, attr), getattr(parent_b, attr), relative_strength)
 
+    def mutate(self, rate):
+        for gene in self.all_genes:
+            if random.random() < rate:
+                i = random.randint(0, gene.size - 1)
+                # flip bit
+                gene.bits[i] = 1 if gene.bits[i] == 0 else 0
+
+
+
 # ph_a = Phenotype(0)
 # ph_a.randomize()
 # print(ph_a)

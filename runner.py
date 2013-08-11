@@ -14,19 +14,18 @@ from slideshow import getFilePaths, rationalSizer, tran_none, imageTypes
 
 from population import *
 
+FULLSCREEN = False
 RESOLUTION = (800, 600)
 PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_POP_DUMP = PATH_TO_SCRIPT + "/population.dump"
 PATH_TO_RENDER_SH = PATH_TO_SCRIPT + "/dnarender.sh"
-
-GENERATION_SIZE = 5
 
 class Runner:
     def __init__(self):
         self.running_procs = []
         self.render_backlog = []
 
-        self.fullscreen = True
+        self.fullscreen = FULLSCREEN
         self.resolution = RESOLUTION
 
 
@@ -38,11 +37,14 @@ class Runner:
         except IOError:
             print("Population file not found. Creating first generation.")
             self.pop = Population()
-            self.pop.create_first_generation(GENERATION_SIZE)
+            self.pop.create_first_generation()
             for ph in self.pop.phenotypes:
                 self.start_image_render(ph)
+            sys.stdout.write("Waiting for render of first batch to end")
+            sys.stdout.flush()
             while self.check_image_renders() > 0:
-                print("Waiting for render of first batch to end")
+                sys.stdout.write(".")
+                sys.stdout.flush()
                 time.sleep(1)
 
 
@@ -77,6 +79,8 @@ class Runner:
                     print("ERROR: Render process failed")
                     print(proc.stderr)
                     # TODO: do something about it
+                else:
+                    print("Render process finished successfully.")
                 if self.render_backlog:
                     self.start_image_render(self.render_backlog.pop(0))
             else:  # process still running
@@ -122,16 +126,27 @@ class Runner:
                     return 0
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
                     self.pop.current.yes += 1
+                    self.check_image_renders()
                     ph = self.pop.get_next(self.check_image_available)
                     self.show_phenotype_image(ph)
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
                     self.pop.current.no += 1
+                    self.check_image_renders()
                     ph = self.pop.get_next(self.check_image_available)
                     self.show_phenotype_image(ph)
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     self.pop.current.meh += 1
+                    self.check_image_renders()
                     ph = self.pop.get_next(self.check_image_available)
                     self.show_phenotype_image(ph)
+
+                    # TODO: find better place for this (auto-advance)
+                    if self.pop.is_ready_for_next_generation():
+                        children = self.pop.create_new_generation()
+                        for child in children:
+                            child.mutate(0.1)
+                            self.start_image_render(child)
+
 
                 # elif event.type == pygame.USEREVENT + 1:
                 #     i += 1

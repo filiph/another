@@ -7,13 +7,17 @@ class Population:
         self.phenotypes = []
         self.current = None
         self.current_generation = -1
+        self.latest_idn = 0
 
-    def create_first_generation(self, size):
-        for i in range(0, size):
+    GENERATION_SIZE = 5
+
+    def create_first_generation(self):
+        for i in range(0, Population.GENERATION_SIZE):
             ph = Phenotype(i)
             ph.generation = 0
             ph.randomize()
             self.phenotypes.append(ph)
+            self.latest_idn = i
         self.current_generation = 0
         self.current = self.phenotypes[0]
 
@@ -32,11 +36,61 @@ class Population:
     def get_random(self):
         # TODO: currently living have much higher chance to be picked
         # TODO: non-resolved (insignificant numbers) have higher chance
-        return random.choice(self.get_current_generation())
+        return random.choice(self.phenotypes)
+        #return random.choice(list(self.get_current_generation()))
 
     def get_current_generation(self):
         def current(ph): return ph.generation == self.current_generation
-        return list(filter(current, self.phenotypes))
+        return filter(current, self.phenotypes)
+
+    MIN_VOTES = 3  # Minimum number of yes/no votes to calculate fitness
+
+    def is_ready_for_next_generation(self):
+        gen = self.get_current_generation()
+        if not gen:
+            return False
+        ready = True
+        for ph in gen:
+            if ph.yes + ph.no < Population.MIN_VOTES:
+                ready = False
+                break
+        return ready
+
+    def calculate_fitness(ph):
+        assert(ph.yes + ph.no > 0)
+        return (ph.yes - ph.no) / float(ph.yes + ph.no)
+
+    def create_new_generation(self):
+        print("Creating a new generation number " + str(self.current_generation + 1))
+        parents = list(self.get_current_generation())
+        parents.sort(key = Population.calculate_fitness)
+        # Create a pool of candidates. The more successful 
+        candidates = []
+        for i in range(0, len(parents)):
+            slots_taken = i  # simple function - more fitness => more slots
+            for j in range(0, slots_taken):
+                candidates.append(parents[i])
+            print("Phenotype " + parents[i].get_binary_string() + " gets " + str(slots_taken) + " slots in the pool")
+        # Start mating
+        print("Mating...")
+        self.current_generation += 1
+        count = 0
+        children = []
+        while count < Population.GENERATION_SIZE:
+            parent_a = random.choice(candidates)
+            parent_b = random.choice(candidates)
+            if parent_a == parent_b:
+                continue
+            self.latest_idn += 1
+            child = Phenotype(self.latest_idn)
+            child.generation = self.current_generation
+            child.set_from_mating(parent_a, parent_b, 0.5)
+            self.phenotypes.append(child)
+            children.append(child)
+            count += 1
+            print("- newborn phenotype: " + child.get_binary_string())
+        return children
+
 
 # pop = Population()
 # pop.create_first_generation(5)
