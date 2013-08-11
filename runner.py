@@ -155,7 +155,8 @@ class Runner:
                 #     save_pop_to_file()
 
     def show_phenotype_image(self, ph):
-        print("Showing phenotype " + ph.get_binary_string())
+        print("Showing phenotype " + str(ph.idn) + " (gen " + str(ph.generation) +
+                ", dna " + ph.get_binary_string() + ")")
         blitdata = rationalSizer(pygame.image.load(self.get_phenotype_image_path(ph)), self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
 

@@ -33,11 +33,26 @@ class Population:
         self.current = candidate
         return candidate
 
+    def calculate_show_score(self, ph):
+        """ Returns int which represents the chance with which the given phenotype should be shown. """
+        score = 0
+        score += ph.generation + 1  # more recent generations are more likely to show
+        score *= 2 if (ph.yes + ph.no < Population.MIN_VOTES) else 1  # non-resolved phenotypes are much more likely to show
+        # TODO: cache score - it is retrieved twice per phenotype
+        return score
+
+    # inspired by http://stackoverflow.com/a/14916069
     def get_random(self):
-        # TODO: currently living have much higher chance to be picked
-        # TODO: non-resolved (insignificant numbers) have higher chance
-        return random.choice(self.phenotypes)
-        #return random.choice(list(self.get_current_generation()))
+        score_sum = 0
+        for ph in self.phenotypes:
+            score_sum += self.calculate_show_score(ph)
+        choice = random.randint(0, score_sum - 1)
+        pos = 0
+        for ph in self.phenotypes:
+            pos += self.calculate_show_score(ph)
+            if (choice < pos):
+                return ph
+        assert(False)
 
     def get_current_generation(self):
         def current(ph): return ph.generation == self.current_generation
