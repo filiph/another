@@ -57,6 +57,7 @@ class Phenotype:
         if hasattr(parent_b, "generation"):
             if parent_b.generation >= self.generation:
                 self.generation = parent_b.generation + 1
+        # TODO ^^^ there might be a bug here since generation doesn't go up
 
         for attr, gene in vars(self).items():
             if isinstance(gene, Gene):
@@ -66,11 +67,11 @@ class Phenotype:
 
     def mutate(self, rate):
         for gene in self.all_genes:
-            if random.random() < rate:
-                i = random.randint(0, gene.size - 1)
-                # flip bit
-                gene.bits[i] = 1 if gene.bits[i] == 0 else 0
-
+            # TODO: flip via crossover or according to gene borders
+            for i in range(0, len(gene.bits)):
+                if random.random() < rate:
+                    # flip bit
+                    gene.bits[i] = 1 if gene.bits[i] == 0 else 0
 
 
 # ph_a = Phenotype(0)
