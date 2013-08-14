@@ -28,7 +28,9 @@ class Population:
         while True:
             candidate = self.get_random()
             if (candidate is not self.current):
-                if (check_callback != None and check_callback(candidate)):
+                if (check_callback == None):
+                    break
+                elif check_callback(candidate):
                     break
         self.current = candidate
         return candidate
