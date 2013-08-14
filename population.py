@@ -9,10 +9,13 @@ class Population:
         self.current_generation = -1
         self.latest_idn = 0
 
-    GENERATION_SIZE = 5
+    GENERATION_SIZE = 4
+    FIRST_GENERATION_SIZE = GENERATION_SIZE * 5
+    MUTATION_RATE = 0.2
+    MIN_VOTES = 3  # Minimum number of yes/no votes to calculate fitness
 
     def create_first_generation(self):
-        for i in range(0, Population.GENERATION_SIZE):
+        for i in range(0, Population.FIRST_GENERATION_SIZE):
             ph = Phenotype(i)
             ph.generation = 0
             ph.randomize()
@@ -60,7 +63,16 @@ class Population:
         def current(ph): return ph.generation == self.current_generation
         return filter(current, self.phenotypes)
 
-    MIN_VOTES = 3  # Minimum number of yes/no votes to calculate fitness
+    BEST_PICK_RANDOMNESS_FACTOR = 2.0
+
+    def get_best(self, num):
+        def get_score(ph):
+            # can get old ones without any yes/no histroy
+            if ph.yes + ph.no == 0: return 0.0
+            return (ph.yes - ph.no) / float(ph.yes + ph.no) + \
+                    (random.random() - 0.5) * Population.BEST_PICK_RANDOMNESS_FACTOR
+        return sorted(self.phenotypes, key=get_score, reverse=True)[:num] # TODO: use nlargest
+
 
     def is_ready_for_next_generation(self):
         gen = self.get_current_generation()
@@ -80,8 +92,10 @@ class Population:
     def create_new_generation(self):
         print("Creating a new generation number " + str(self.current_generation + 1))
         parents = list(self.get_current_generation())
+        parents = parents[:int(Population.GENERATION_SIZE / 2)]
+        parents.extend(self.get_best(int(Population.GENERATION_SIZE / 2)))
         parents.sort(key = Population.calculate_fitness)
-        # Create a pool of candidates. The more successful 
+        # Create a pool of candidates. The more successful get more slots
         candidates = []
         for i in range(0, len(parents)):
             slots_taken = i  # simple function - more fitness => more slots
@@ -100,8 +114,9 @@ class Population:
                 continue
             self.latest_idn += 1
             child = Phenotype(self.latest_idn)
-            child.generation = self.current_generation
             child.set_from_mating(parent_a, parent_b, 0.5)
+            child.generation = self.current_generation
+            child.mutate(Population.MUTATION_RATE)
             self.phenotypes.append(child)
             children.append(child)
             count += 1
