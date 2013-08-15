@@ -170,7 +170,7 @@ class Population:
                 mutant = Phenotype(self.latest_idn)
                 mutant.generation = self.current_generation
                 mutant.set_from_dna(parent.get_binary_string())
-                mutant.mutate(Population.MUTATION_RATE)
+                mutant.mutate(Population.MUTATION_RATE / 2)
                 self.phenotypes.append(mutant)
                 children.append(mutant)
                 print("- new mutant clone: " + str(mutant))
