@@ -11,14 +11,14 @@ class Population:
         self.latest_idn = 0
 
     GENERATION_SIZE = 5
-    FIRST_GENERATION_SIZE = GENERATION_SIZE * 2
-    MUTATION_RATE = 0.2
+    FIRST_GENERATION_SIZE = GENERATION_SIZE * 1
+    MUTATION_RATE = 0.1
     MIN_VOTES = 20  # Minimum number of yes/no votes to calculate fitness
 
     # TODO: make these dynamic - the more winners we have, the narrower their strands are?
     MUTATION_THRESHOLD = 0.7  # after certain success rate, only mutate without mating
     STRAND_COMPLETE_THRESHOLD = 0.9  #  after certain success rate, this phenotype is marked as complete and similar (as defined by STRAND_RANGE) phenotypes are discouraged/forbidden for mating or being born
-    STRAND_RANGE = 0.1  # if a phenotype is (1 - STRAND_RANGE)% similar to a winner phenotype, it is marked as part of its strand
+    STRAND_RANGE = 0.2  # if a phenotype is (1 - STRAND_RANGE)% similar to a winner phenotype, it is marked as part of its strand
 
     def create_first_generation(self):
         first_ones = []
@@ -74,7 +74,7 @@ class Population:
         def current(ph): return ph.generation == self.current_generation
         return filter(current, self.phenotypes)
 
-    BEST_PICK_RANDOMNESS_FACTOR = 2.0
+    BEST_PICK_RANDOMNESS_FACTOR = 0.0
 
     def get_best(self, num, randomness=BEST_PICK_RANDOMNESS_FACTOR):
         def get_score(ph):
@@ -113,6 +113,7 @@ class Population:
                         if ph.get_similarity(candidate) < 1 - Population.STRAND_RANGE]
                 count -= len(self.phenotypes)
                 print("   - deleted " + str(count) + " strand members")
+                # TODO: put new randoms in place of the removed from this generation
 
     def phenotype_in_one_of_strands(self, ph):
         for winner in self.winners:
@@ -122,9 +123,12 @@ class Population:
 
     def create_new_generation(self):
         print("Creating a new generation number " + str(self.current_generation + 1))
-        parents = list(self.get_current_generation())
-        parents.sort(key = Population.calculate_fitness)
-        parents = parents[:int(Population.GENERATION_SIZE / 2)]
+        old_generation = list(self.get_current_generation())
+        old_generation.sort(key = Population.calculate_fitness)
+        print("  - old generation")
+        for member in old_generation:
+            print("    - {0} ({1}/{2})".format(member, member.yes, member.no))
+        parents = old_generation[:int(Population.GENERATION_SIZE / 2)]
         parents.extend(self.get_best(int(Population.GENERATION_SIZE / 2)))
         parents.sort(key = Population.calculate_fitness)
         # Create a pool of candidates. The more successful get more slots
@@ -133,7 +137,7 @@ class Population:
             slots_taken = i  # simple function - more fitness => more slots
             for j in range(0, slots_taken):
                 candidates.append(parents[i])
-            print("Phenotype " + parents[i].get_binary_string() + " gets " + str(slots_taken) + " slots in the pool")
+            print("Phenotype " + str(parents[i]) + " gets " + str(slots_taken) + " slots in the pool")
         # Start mating
         print("Mating...")
         self.current_generation += 1
@@ -158,7 +162,26 @@ class Population:
             children.append(child)
             self.latest_idn += 1
             count += 1
-            print("- newborn phenotype: " + child.get_binary_string())
+            print("- newborn phenotype: {0} (parents {1})".format(child, child.parent_idns))
+        # resolve elites
+        for parent in old_generation:
+            if parent.get_fitness_from_votes() > Population.MUTATION_THRESHOLD:
+                self.latest_idn += 1
+                mutant = Phenotype(self.latest_idn)
+                mutant.generation = self.current_generation
+                mutant.set_from_dna(parent.get_binary_string())
+                mutant.mutate(Population.MUTATION_RATE)
+                self.phenotypes.append(mutant)
+                children.append(mutant)
+                print("- new mutant clone: " + str(mutant))
+                # self.latest_idn += 1
+                # clone = Phenotype(self.latest_idn)
+                # clone.generation = self.current_generation
+                # clone.set_from_dna(parent.get_binary_string())
+                # self.phenotypes.append(clone)
+                # children.append(clone)
+                parent.generation = self.current_generation # TODO: dehack
+                print("- old parent (" + str(parent) + ") kept around")
         return children
 
 

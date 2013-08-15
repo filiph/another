@@ -14,8 +14,6 @@ DESIRABLEOUTCOMES = [
         "0101010101010101"]
 
 ITERATIONS = 5000
-SUCCESS_THRESHOLD = 3.0  # 1.0 is a 100% match for each desirable
-                         # outcome.
 
 
 def get_match(dna1, dna2):
@@ -83,7 +81,7 @@ for i in range(0, ITERATIONS):
     if (i % 100 == 0):
         print("TEST     : Iteration " + str(i))
     ph = pop.get_next()
-    if random.random() < get_desirability(ph, sameness_penalty=True):
+    if random.random() < get_desirability(ph, sameness_penalty=False):
         ph.yes += 1
     else:
         ph.no += 1
