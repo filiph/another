@@ -16,6 +16,7 @@ class Phenotype:
         self.show_trees = Gene(0, 1)
         self.sun_position = Gene(1, 3)  # 8 different positions (2**3)
         self.trees_seed = Gene(2, 4)
+        self.arbitrary_gene = Gene(3, 8)
 
         self.set_all_genes()
 
@@ -31,11 +32,28 @@ class Phenotype:
             if isinstance(value, Gene):
                 self.all_genes.append(value)
 
+    def get_fitness_from_votes(self):
+        if self.yes + self.no == 0:
+            return 0
+        return (self.yes - self.no) / float(self.yes + self.no)
+
     def get_binary_string(self):
         str_list = []
         for gene in sorted(self.all_genes, key = lambda gene: gene.pos):
             str_list.append(gene.get_binary_string())
         return "".join(str_list)
+
+    # TODO: make this based on genes, or use Gray for num attributes
+    def get_similarity(self, other):
+        dna1 = self.get_binary_string()
+        dna2 = other.get_binary_string()
+        l = len(dna1)
+        assert(l, len(dna2))
+        matched = 0
+        for i in range(0, l):
+            if dna1[i] == dna2[i]:
+                matched += 1
+        return matched / float(len(dna1)) 
 
     def randomize(self):
         for gene in self.all_genes:
