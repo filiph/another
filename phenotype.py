@@ -24,6 +24,7 @@ class Phenotype:
         str_list = ["Phenotype ", str(self.idn), ": "]
         for gene in self.all_genes:
             str_list.append(gene.get_binary_string())
+        str_list.append(" (f={0})".format(self.get_fitness_from_votes()))
         return ''.join(str_list)
 
     def set_all_genes(self):
@@ -35,7 +36,7 @@ class Phenotype:
     def get_fitness_from_votes(self):
         if self.yes + self.no == 0:
             return 0
-        return (self.yes - self.no) / float(self.yes + self.no)
+        return (1 + (self.yes - self.no) / float(self.yes + self.no)) / float(2)
 
     def get_binary_string(self):
         str_list = []

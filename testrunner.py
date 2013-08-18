@@ -13,7 +13,7 @@ DESIRABLEOUTCOMES = [
         "1010101010101010",
         "0101010101010101"]
 
-ITERATIONS = 5000
+ITERATIONS = 50000
 
 
 def get_match(dna1, dna2):
@@ -24,28 +24,19 @@ def get_match(dna1, dna2):
             matched += 1
     return matched / float(len(dna1))
 
-last_few_phenotypes = []
-MAX_LAST_FEW_PHENOTYPES = 5
-
-def get_desirability(ph, sameness_penalty=False):
+def get_desirability(ph):
     bestresult = 0
     for outcome in DESIRABLEOUTCOMES:
         result = get_match(ph.get_binary_string(), outcome)
-        # if sameness_penalty:
-        #     samepenalty = 0
-        #     for recent_ph in last_few_phenotypes:
-        #         p = get_match(ph.get_binary_string(),
-        #                 recent_ph.get_binary_string())
-        #         p = p / 4.0  # dampen the 'sameness' penalty
-        #         if p > samepenalty:
-        #             samepenalty = p
-        #     result -= samepenalty
         if result > bestresult:
             bestresult = result
-    if len(last_few_phenotypes) > MAX_LAST_FEW_PHENOTYPES:
-        last_few_phenotypes.pop(0)
-    last_few_phenotypes.append(ph)
     return bestresult
+
+def get_current_generation_average_desirability(pop):
+    score = 0
+    for ph in pop.get_current_generation():
+        score += get_desirability(ph)
+    return score / float(Population.GENERATION_SIZE)
 
 def get_current_generation_desirability(pop):
     score = 0
@@ -74,23 +65,26 @@ pop = Population()
 pop.create_first_generation()
 
 gen_desirabilities = []
+gen_avg_desirabilities = []
 best_desirabilities = []
 
 print("TEST     : Starting voting")
 for i in range(0, ITERATIONS):
     if (i % 100 == 0):
         print("TEST     : Iteration " + str(i))
-    ph = pop.get_next()
-    if random.random() < get_desirability(ph, sameness_penalty=False):
+    #ph = pop.get_next()
+    ph = random.choice(list(pop.get_current_generation()))
+    if random.random() < get_desirability(ph):
         ph.yes += 1
     else:
         ph.no += 1
 
     if pop.is_ready_for_next_generation():
         gen_desirabilities.append(get_current_generation_desirability(pop))
+        gen_avg_desirabilities.append(get_current_generation_average_desirability(pop))
         best_desirabilities.append(get_best_desirability(pop))
-        print("TEST     : Identifying strand winners")
-        pop.identify_winners()
+        # print("TEST     : Identifying strand winners")
+        # pop.identify_winners()
         print("TEST     : Creating new generation (" +
                 str(pop.current_generation + 1) + ")")
         children = pop.create_new_generation()
@@ -111,6 +105,7 @@ for ph in pop.get_current_generation():
 print("RESULT   : development of generation desirabilities")
 for i in range(len(gen_desirabilities)):
     print(str(i) + "\t" + str(gen_desirabilities[i]) + "\t" +
+            str(gen_avg_desirabilities[i]) + "\t" +
             str(best_desirabilities[i]))
 
 print("RESULT   : the best voted phenotypes")
