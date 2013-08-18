@@ -10,12 +10,12 @@ class Population:
         self.current_generation = -1
         self.latest_idn = 0
 
-    GENERATION_SIZE = 10  # Should be even.
+    GENERATION_SIZE = 20  # Should be even.
     FIRST_GENERATION_SIZE = GENERATION_SIZE * 1
-    CROSSOVER_PROBABILITY = 0.9
+    CROSSOVER_PROBABILITY = 0.7
     SHARED_FITNESS_SIGMA = 0.05
     SHARED_FITNESS_ALPHA = 1
-    MUTATION_RATE = 0.05
+    MUTATION_RATE = 0.01
     MIN_VOTES = 10  # Minimum number of yes/no votes to calculate fitness
 
     def create_first_generation(self):
@@ -143,12 +143,16 @@ class Population:
         return shared_fitness
 
     def get_random_tournament_winner(self, pool):
-        contenstant1 = random.choice(pool)
-        contenstant2 = random.choice(pool)
-        if self.get_shared_fitness(contenstant1, pool) > self.get_shared_fitness(contenstant2, pool):
-            return contenstant1
+        contestant1 = random.choice(pool)
+        contestant2 = None
+        while True:
+            contestant2 = random.choice(pool)
+            if contestant2 != contestant1:
+                break
+        if self.get_shared_fitness(contestant1, pool) > self.get_shared_fitness(contestant2, pool):
+            return contestant1
         else:
-            return contenstant2
+            return contestant2
 
     def create_from_crossover_genes(self, ph1, ph2):
         assert(len(ph1.all_genes) == len(ph2.all_genes))
