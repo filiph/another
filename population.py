@@ -15,7 +15,7 @@ class Population:
     CROSSOVER_PROBABILITY = 0.7
     SHARED_FITNESS_SIGMA = 0.05
     SHARED_FITNESS_ALPHA = 1
-    MUTATION_RATE = 0.01
+    MUTATION_RATE = 0.05
     MIN_VOTES = 10  # Minimum number of yes/no votes to calculate fitness
 
     def create_first_generation(self):
