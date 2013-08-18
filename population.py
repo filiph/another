@@ -10,14 +10,15 @@ class Population:
         self.current_generation = -1
         self.latest_idn = 0
 
-    GENERATION_SIZE = 5
+    GENERATION_SIZE = 20
     FIRST_GENERATION_SIZE = GENERATION_SIZE * 1
     MUTATION_RATE = 0.1
     MIN_VOTES = 20  # Minimum number of yes/no votes to calculate fitness
 
     # TODO: make these dynamic - the more winners we have, the narrower their strands are?
     MUTATION_THRESHOLD = 0.7  # after certain success rate, only mutate without mating
-    STRAND_COMPLETE_THRESHOLD = 0.9  #  after certain success rate, this phenotype is marked as complete and similar (as defined by STRAND_RANGE) phenotypes are discouraged/forbidden for mating or being born
+    STRAND_CANDIDATE_MUTATION_RATE = 0.05
+    STRAND_COMPLETE_THRESHOLD = 0.8  #  after certain success rate, this phenotype is marked as complete and similar (as defined by STRAND_RANGE) phenotypes are discouraged/forbidden for mating or being born
     STRAND_RANGE = 0.2  # if a phenotype is (1 - STRAND_RANGE)% similar to a winner phenotype, it is marked as part of its strand
 
     def create_first_generation(self):
@@ -103,6 +104,8 @@ class Population:
     def identify_winners(self):
         """ Find if there are any winners and act accordingly. """
         for candidate in self.phenotypes:
+            if self.phenotype_in_one_of_strands(candidate):
+                continue  # Already taken care of.
             fitness = candidate.get_fitness_from_votes()
             if (fitness > Population.STRAND_COMPLETE_THRESHOLD):
                 print("- identified a strand winner: " + str(candidate))
@@ -170,7 +173,7 @@ class Population:
                 mutant = Phenotype(self.latest_idn)
                 mutant.generation = self.current_generation
                 mutant.set_from_dna(parent.get_binary_string())
-                mutant.mutate(Population.MUTATION_RATE / 2)
+                mutant.mutate(Population.STRAND_CANDIDATE_MUTATION_RATE)
                 self.phenotypes.append(mutant)
                 children.append(mutant)
                 print("- new mutant clone: " + str(mutant))

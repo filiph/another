@@ -115,10 +115,10 @@ for i in range(len(gen_desirabilities)):
 
 print("RESULT   : the best voted phenotypes")
 for ph in pop.get_best(10, randomness=0):
-    print(str(ph.idn) + "\t" + ph.get_binary_string()+ "\t" +
+    print(str(ph) + "\t" +
             str(ph.yes) + "/" + str(ph.no) + "\t" + str(get_desirability(ph)))
 
 print("RESULT   : strand winners")
 for ph in pop.winners:
-    print(str(ph.idn) + "\t" + ph.get_binary_string()+ "\t" +
+    print(str(ph) + "\t" +
             str(ph.yes) + "/" + str(ph.no) + "\t" + str(get_desirability(ph)))
