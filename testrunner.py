@@ -6,6 +6,7 @@ import random
 import pickle
 
 from population import *
+from neural import NN
 
 DESIRABLEOUTCOMES = [
         "1111111111111111",
@@ -68,6 +69,8 @@ gen_desirabilities = []
 gen_avg_desirabilities = []
 best_desirabilities = []
 
+nn_train_set = []
+
 print("TEST     : Starting voting")
 for i in range(0, ITERATIONS):
     if (i % 100 == 0):
@@ -80,6 +83,15 @@ for i in range(0, ITERATIONS):
         ph.no += 1
 
     if pop.is_ready_for_next_generation():
+        for ph in pop.get_current_generation():
+            nn_pattern_input = []
+            for gene in ph.all_genes:
+                nn_pattern_input.append(gene.get_int())
+            nn_pattern_output = [ph.get_fitness_from_votes()]
+            nn_pattern = [nn_pattern_input, nn_pattern_output]
+            print(nn_pattern)
+            nn_train_set.append(nn_pattern)
+
         gen_desirabilities.append(get_current_generation_desirability(pop))
         gen_avg_desirabilities.append(get_current_generation_average_desirability(pop))
         best_desirabilities.append(get_best_desirability(pop))
@@ -117,3 +129,9 @@ print("RESULT   : strand winners")
 for ph in pop.winners:
     print(str(ph) + "\t" +
             str(ph.yes) + "/" + str(ph.no) + "\t" + str(get_desirability(ph)))
+
+print("TRY      : neural network")
+gene_count = len(Phenotype(-1).all_genes)
+neural_network = NN(gene_count, 3, 1)
+neural_network.train(nn_train_set)
+neural_network.test(nn_train_set)

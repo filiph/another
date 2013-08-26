@@ -15,8 +15,12 @@ class Phenotype:
 
         self.show_trees = Gene(0, 1)
         self.sun_position = Gene(1, 3)  # 8 different positions (2**3)
-        self.trees_seed = Gene(2, 4)
-        self.arbitrary_gene = Gene(3, 8)
+        self.trees_seed = Gene(2, 2)
+        self.arbitrary_a = Gene(3, 2)
+        self.arbitrary_b = Gene(4, 2)
+        self.arbitrary_c = Gene(5, 2)
+        self.arbitrary_d = Gene(6, 2)
+        self.arbitrary_e = Gene(7, 2)
 
         self.set_all_genes()
 
