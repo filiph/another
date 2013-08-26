@@ -2,12 +2,12 @@
 
 # Rendering script from: http://www.blender.org/forum/viewtopic.php?t=19102
 
-import bpy, bgl, blf,sys 
+import bpy, bgl, blf, sys
 from bpy import data, ops, props, types, context
 
 sys.path.append("/Users/filiph/dev/blender")
 
-from phenotype import *
+from lib.phenotype import *
 
 # print("\nThis Python script will render your scene with all available cameras") 
 # print("or with camera(s) matching command line argument 'cameras'") 

@@ -5,8 +5,8 @@ import sys
 import random
 import pickle
 
-from population import *
-from neural import NN
+from lib.population import *
+from lib.neural import NN
 
 DESIRABLEOUTCOMES = [
         "1111111111111111",

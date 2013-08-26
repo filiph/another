@@ -1,6 +1,6 @@
 import random
 
-from phenotype import Phenotype
+from lib.phenotype import Phenotype
 
 class Population:
     def __init__(self):

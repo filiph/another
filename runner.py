@@ -10,9 +10,9 @@ import pickle
 import subprocess
 import time
 
-from slideshow import getFilePaths, rationalSizer, tran_none, imageTypes
+from lib.slideshow import getFilePaths, rationalSizer, tran_none, imageTypes
 
-from population import *
+from lib.population import *
 
 FULLSCREEN = False
 RESOLUTION = (800, 600)

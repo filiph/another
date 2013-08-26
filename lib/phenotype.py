@@ -1,4 +1,4 @@
-from gene import *
+from lib.gene import *
 
 class Phenotype:
     INITIAL_HITPOINTS = 10
