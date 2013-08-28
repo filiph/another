@@ -6,6 +6,7 @@ import random
 import pickle
 
 from lib.population import *
+from lib.manager import Manager
 from lib.neural import NN
 
 DESIRABLEOUTCOMES = [
@@ -33,17 +34,17 @@ def get_desirability(ph):
             bestresult = result
     return bestresult
 
-def get_current_generation_average_desirability(pop):
+def get_generation_average_desirability(phenotypes):
     score = 0
-    for ph in pop.get_current_generation():
+    for ph in phenotypes:
         score += get_desirability(ph)
-    return score / float(Population.GENERATION_SIZE)
+    return score / float(len(phenotypes))
 
-def get_current_generation_desirability(pop):
+def get_generation_desirability(phenotypes):
     score = 0
     for outcome in DESIRABLEOUTCOMES:
         bestresult = 0
-        for ph in pop.get_current_generation():
+        for ph in phenotypes:
             result = get_match(ph.get_binary_string(), outcome)
             if result > bestresult:
                 bestresult = result
@@ -61,56 +62,35 @@ def get_best_desirability(pop):
         score += bestresult
     return score
 
+
 print("TEST     : Creating random sample")
-pop = Population()
-pop.create_first_generation()
+m = Manager()
+m.start()
 
 gen_desirabilities = []
 gen_avg_desirabilities = []
 best_desirabilities = []
 
-nn_train_set = []
-
 print("TEST     : Starting voting")
 for i in range(0, ITERATIONS):
     if (i % 100 == 0):
         print("TEST     : Iteration " + str(i))
-    #ph = pop.get_next()
-    ph = random.choice(list(pop.get_current_generation()))
+    ph = random.choice(list(m.pop.get_current_generation()))
     if random.random() < get_desirability(ph):
         ph.yes += 1
     else:
         ph.no += 1
 
-    if pop.is_ready_for_next_generation():
-        for ph in pop.get_current_generation():
-            nn_pattern_input = []
-            for gene in ph.all_genes:
-                nn_pattern_input.append(gene.get_int())
-            nn_pattern_output = [ph.get_fitness_from_votes()]
-            nn_pattern = [nn_pattern_input, nn_pattern_output]
-            print(nn_pattern)
-            nn_train_set.append(nn_pattern)
-
-        gen_desirabilities.append(get_current_generation_desirability(pop))
-        gen_avg_desirabilities.append(get_current_generation_average_desirability(pop))
-        best_desirabilities.append(get_best_desirability(pop))
-        # print("TEST     : Identifying strand winners")
-        # pop.identify_winners()
-        print("TEST     : Creating new generation (" +
-                str(pop.current_generation + 1) + ")")
-        children = pop.create_new_generation()
-        # gen = pop.current_generation
-        # children = pop.create_first_generation()
-        # for child in children:
-        #     child.generation = gen + 1
-        # pop.current_generation = gen + 1
-
+    new_generation = m.step()
+    if new_generation is not None:
+        gen_desirabilities.append(get_generation_desirability(new_generation))
+        gen_avg_desirabilities.append(get_generation_average_desirability(new_generation))
+        best_desirabilities.append(get_best_desirability(m.pop))
 
 print("TEST     : Voting finished")
 print("RESULT   : Desirability score of all time best: " +
-        str(get_best_desirability(pop)))
-for ph in pop.get_current_generation():
+        str(get_best_desirability(m.pop)))
+for ph in m.pop.get_current_generation():
     print("Phenotype " + ph.get_binary_string() + " has desirability " +
             str(get_desirability(ph)))
 
@@ -121,17 +101,17 @@ for i in range(len(gen_desirabilities)):
             str(best_desirabilities[i]))
 
 print("RESULT   : the best voted phenotypes")
-for ph in pop.get_best(10, randomness=0):
+for ph in m.pop.get_best(10, randomness=0):
     print(str(ph) + "\t" +
             str(ph.yes) + "/" + str(ph.no) + "\t" + str(get_desirability(ph)))
 
 print("RESULT   : strand winners")
-for ph in pop.winners:
+for ph in m.pop.winners:
     print(str(ph) + "\t" +
             str(ph.yes) + "/" + str(ph.no) + "\t" + str(get_desirability(ph)))
 
-print("TRY      : neural network")
-gene_count = len(Phenotype(-1).all_genes)
-neural_network = NN(gene_count, 3, 1)
-neural_network.train(nn_train_set)
-neural_network.test(nn_train_set)
+# print("TRY      : neural network")
+# gene_count = len(Phenotype(-1).all_genes)
+# neural_network = NN(gene_count, 3, 1)
+# neural_network.train(nn_train_set)
+# neural_network.test(nn_train_set)
