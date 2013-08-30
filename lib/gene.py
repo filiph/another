@@ -18,7 +18,7 @@ class Gene:
             elif ch == '0':
                 self.bits.append(0)
             else:
-                raise InputError(string, "Initialization string can only have zeroes or ones.")
+                raise Exception(string, "Initialization string can only have zeroes or ones.")
             i += 1
 
     def set_from_mating(self, a_gene, b_gene, relative_strength):
