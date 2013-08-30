@@ -9,7 +9,7 @@ from lib.population import *
 from lib.manager import Manager
 from lib.neural import NN
 
-DESIRABLEOUTCOMES = [
+DESIRABLE_OUTCOMES = [
         "1111111111111111",
         "0000000000000000",
         "1010101010101010",
@@ -27,12 +27,12 @@ def get_match(dna1, dna2):
     return matched / float(len(dna1))
 
 def get_desirability(ph):
-    bestresult = 0
-    for outcome in DESIRABLEOUTCOMES:
+    best_result = 0
+    for outcome in DESIRABLE_OUTCOMES:
         result = get_match(ph.get_binary_string(), outcome)
-        if result > bestresult:
-            bestresult = result
-    return bestresult
+        if result > best_result:
+            best_result = result
+    return best_result
 
 def get_generation_average_desirability(phenotypes):
     score = 0
@@ -42,24 +42,24 @@ def get_generation_average_desirability(phenotypes):
 
 def get_generation_desirability(phenotypes):
     score = 0
-    for outcome in DESIRABLEOUTCOMES:
-        bestresult = 0
+    for outcome in DESIRABLE_OUTCOMES:
+        best_result = 0
         for ph in phenotypes:
             result = get_match(ph.get_binary_string(), outcome)
-            if result > bestresult:
-                bestresult = result
-        score += bestresult
+            if result > best_result:
+                best_result = result
+        score += best_result
     return score
 
 def get_best_desirability(pop):
     score = 0
-    for outcome in DESIRABLEOUTCOMES:
-        bestresult = 0
+    for outcome in DESIRABLE_OUTCOMES:
+        best_result = 0
         for ph in pop.phenotypes:
             result = get_match(ph.get_binary_string(), outcome)
-            if result > bestresult:
-                bestresult = result
-        score += bestresult
+            if result > best_result:
+                best_result = result
+        score += best_result
     return score
 
 
