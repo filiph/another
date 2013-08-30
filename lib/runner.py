@@ -33,21 +33,26 @@ class Runner:
 
             new_generation = self.manager.step()
             if new_generation is not None:
-                self.gen_avg_desirabilities.append(
-                    Runner.get_average_desirability(new_generation, self.objective_function))
-                self.gen_best_desirabilities.append(
-                    Runner.get_best_desirability(new_generation, self.objective_function))
+                self.gen_avg_desirabilities.append(self.get_average_desirability(new_generation))
+                self.gen_best_desirabilities.append(self.get_best_desirability(new_generation))
 
-    def get_average_desirability(phenotypes, objective_function):
+    @property
+    def improvement(self):
+        return self.get_average_desirability(self.manager.pop.get_current_generation()) / \
+            self.get_average_desirability(self.manager.pop.get_generation(0)) - 1
+
+    def get_average_desirability(self, phenotypes):
         score = 0
+        count = 0
         for ph in phenotypes:
-            score += objective_function(ph)
-        return score / float(len(phenotypes))
+            score += self.objective_function(ph)
+            count += 1
+        return score / float(count)
 
-    def get_best_desirability(phenotypes, objective_function):
+    def get_best_desirability(self, phenotypes):
         best_result = 0
         for ph in phenotypes:
-            result = objective_function(ph)
+            result = self.objective_function(ph)
             if result > best_result:
                 best_result = result
         return best_result

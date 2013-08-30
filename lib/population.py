@@ -72,8 +72,11 @@ class Population:
         assert(False)
 
     def get_current_generation(self):
-        def current(ph): return ph.generation == self.current_generation
-        return filter(current, self.phenotypes)
+        return self.get_generation(self.current_generation)
+
+    def get_generation(self, number):
+        def fitting(ph): return ph.generation == number
+        return filter(fitting, self.phenotypes)
 
     BEST_PICK_RANDOMNESS_FACTOR = 0.0
 
