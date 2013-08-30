@@ -13,6 +13,14 @@ class TestGene(TestCase):
     # def test_set_from_int(self):
     #     self.fail()
 
+    def test_int_saves_and_loads(self):
+        MAX_BITS = 8
+        for bit_length in range(1, MAX_BITS):
+            g = Gene(0, bit_length)
+            for integer in range(2 ** bit_length):
+                g.set_from_int(integer)
+                self.assertEqual(g.get_int(), integer)
+
     def test_get_bool(self):
         g = Gene(0, 1)
         g.set_from_string("1")
