@@ -3,24 +3,25 @@ import random
 from lib.phenotype import Phenotype
 
 class Population:
-    def __init__(self):
+    def __init__(self, size=20, crossover_probability=0.7, shared_fitness_sigma=0.05,
+                 shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10):
         self.phenotypes = []
         self.winners = []
         self.current = None
         self.current_generation = -1
         self.latest_idn = 0
 
-    GENERATION_SIZE = 20  # Should be even.
-    FIRST_GENERATION_SIZE = GENERATION_SIZE * 1
-    CROSSOVER_PROBABILITY = 0.7
-    SHARED_FITNESS_SIGMA = 0.05
-    SHARED_FITNESS_ALPHA = 1
-    MUTATION_RATE = 0.05
-    MIN_VOTES = 10  # Minimum number of yes/no votes to calculate fitness
+        self.generation_size = size
+        self.crossover_probability = crossover_probability
+        self.shared_fitness_sigma = shared_fitness_sigma
+        self.shared_fitness_alpha = shared_fitness_alpha
+        self.mutation_rate = mutation_rate
+
+        self.min_votes = min_votes  # Minimum number of yes/no votes to calculate fitness
 
     def create_first_generation(self):
         first_ones = []
-        for i in range(0, Population.FIRST_GENERATION_SIZE):
+        for i in range(self.generation_size):
             ph = Phenotype(i)
             ph.generation = 0
             ph.randomize()
@@ -51,7 +52,8 @@ class Population:
         """ Returns int which represents the chance with which the given phenotype should be shown. """
         score = 0
         score += ph.generation + 1  # more recent generations are more likely to show
-        score *= 2 if (ph.yes + ph.no < Population.MIN_VOTES) else 1  # non-resolved phenotypes are much more likely to show
+        score *= 2 if (ph.yes + ph.no < self.min_votes) else 1  # non-resolved phenotypes are much more
+        # likely to show
         # TODO: cache score - it is retrieved twice per phenotype
         return score
 
@@ -88,7 +90,7 @@ class Population:
             return False
         ready = True
         for ph in gen:
-            if ph.yes + ph.no < Population.MIN_VOTES:
+            if ph.yes + ph.no < self.min_votes:
                 ready = False
                 break
         return ready
@@ -135,8 +137,8 @@ class Population:
         niche_count = 0
         for candidate in pool:
             dist = Population.hamming_distance(candidate, ph) / float(str_len)
-            if dist < Population.SHARED_FITNESS_SIGMA:
-                niche_count += 1 - (dist / Population.SHARED_FITNESS_SIGMA) ** Population.SHARED_FITNESS_ALPHA
+            if dist < self.shared_fitness_sigma:
+                niche_count += 1 - (dist / self.shared_fitness_sigma) ** self.shared_fitness_alpha
                 print("- found a phenotype in radius (dist={0}) - {1}".format(dist, candidate))
         shared_fitness = ph.get_fitness_from_votes() / niche_count
         print("- final fitness = {0}".format(shared_fitness))
@@ -192,8 +194,6 @@ class Population:
         child2.set_from_dna("".join(child2dna))
         return child1, child2
 
-
-
     def create_new_generation(self):
         print("Creating a new generation number " + str(self.current_generation + 1))
         old_generation = list(self.get_current_generation())
@@ -203,10 +203,10 @@ class Population:
         print("Mating...")
         self.current_generation += 1
         children = []
-        for i in range(int(Population.GENERATION_SIZE / 2)):
+        for i in range(int(self.generation_size / 2)):
             winner1 = self.get_random_tournament_winner(old_generation)
             winner2 = self.get_random_tournament_winner(old_generation)
-            if random.random() < Population.CROSSOVER_PROBABILITY:
+            if random.random() < self.crossover_probability:
                 child1, child2 = self.create_from_crossover_bits(winner1, winner2)
             else:
                 self.latest_idn += 1
@@ -215,9 +215,9 @@ class Population:
                 self.latest_idn += 1
                 child2 = Phenotype(self.latest_idn)
                 child2.set_from_dna(winner2.get_binary_string())
-            if Population.MUTATION_RATE > 0:
-                child1.mutate(Population.MUTATION_RATE)
-                child2.mutate(Population.MUTATION_RATE)
+            if self.mutation_rate > 0:
+                child1.mutate(self.mutation_rate)
+                child2.mutate(self.mutation_rate)
             child1.generation = self.current_generation
             child2.generation = self.current_generation
             children.append(child1)
@@ -229,8 +229,3 @@ class Population:
             print(" - " + str(child2))
         self.phenotypes.extend(children)
         return children
-
-
-# pop = Population()
-# pop.create_first_generation(5)
-# print(pop.phenotypes)
