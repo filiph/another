@@ -1,21 +1,18 @@
 # Used to find the best evolution strategy.
 
-import os
 import sys
 import random
-import pickle
 
-from lib.population import *
 from lib.manager import Manager
-from lib.neural import NN
+from lib.runner import Runner
 
 DESIRABLE_OUTCOMES = [
         "1111111111111111",
         "0000000000000000",
-        "1010101010101010",
-        "0101010101010101"]
+        "0000000010101010",
+        "0000000001010101"]
 
-ITERATIONS = 5000
+ITERATIONS = 10000
 
 
 def get_match(dna1, dna2):
@@ -34,34 +31,22 @@ def get_desirability(ph):
             best_result = result
     return best_result
 
-def get_generation_average_desirability(phenotypes):
-    score = 0
-    for ph in phenotypes:
-        score += get_desirability(ph)
-    return score / float(len(phenotypes))
 
-def get_generation_desirability(phenotypes):
-    score = 0
-    for outcome in DESIRABLE_OUTCOMES:
-        best_result = 0
-        for ph in phenotypes:
-            result = get_match(ph.as_string, outcome)
-            if result > best_result:
-                best_result = result
-        score += best_result
-    return score
 
-def get_best_desirability(pop):
-    score = 0
-    for outcome in DESIRABLE_OUTCOMES:
-        best_result = 0
-        for ph in pop.phenotypes:
-            result = get_match(ph.as_string, outcome)
-            if result > best_result:
-                best_result = result
-        score += best_result
-    return score
 
+m = Manager(size=10)
+m.start()
+runner = Runner(m, objective_function=get_desirability)
+
+runner.run(2000)
+
+print("Runner completed with end result: {0} ({1} improvement)"
+        .format(runner.gen_avg_desirabilities[-1],
+                runner.gen_avg_desirabilities[-1] / runner.gen_avg_desirabilities[0] - 1))
+
+sys.exit(0)
+
+# ========================
 
 print("TEST     : Creating random sample")
 m = Manager()
