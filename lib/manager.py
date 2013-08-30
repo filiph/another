@@ -31,7 +31,7 @@ class Manager:
         for ph in self.pop.get_current_generation():
             nn_pattern_input = []
             for gene in ph.all_genes:
-                nn_pattern_input.append(gene.get_int())
+                nn_pattern_input.append(gene.as_int)
             nn_pattern_output = [ph.get_fitness_from_votes()]
             nn_pattern = [nn_pattern_input, nn_pattern_output]
             print(nn_pattern)

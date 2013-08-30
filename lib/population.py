@@ -32,6 +32,7 @@ class Population:
         self.current = self.phenotypes[0]
         return first_ones
 
+    # TODO: should be in Manager?
     def get_next(self, check_callback=None):
         """ Returns the next phenotype to be shown. """
         assert(len(self.phenotypes) > 0)
@@ -95,11 +96,6 @@ class Population:
                 break
         return ready
 
-    # TODO make obsolete by Phenotype.get_fitness_from_votes
-    def calculate_fitness(ph):
-        assert(ph.yes + ph.no > 0)
-        return (ph.yes - ph.no) / float(ph.yes + ph.no)
-
     def identify_winners(self):
         """ Find if there are any winners and act accordingly. """
         for candidate in self.phenotypes:
@@ -124,16 +120,15 @@ class Population:
         return False
 
     def hamming_distance(ph1, ph2):
-        s1 = ph1.get_binary_string()
-        s2 = ph2.get_binary_string()
+        s1 = ph1.as_string
+        s2 = ph2.as_string
         assert len(s1) == len(s2)
         return sum(ch1 != ch2 for ch1, ch2 in zip(s1, s2))
-
 
     # from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.8352&rep=rep1&type=pdf, p20-21
     def get_shared_fitness(self, ph, pool):
         print("Calculating shared fitness for {0}".format(ph))
-        str_len = len(ph.get_binary_string())
+        str_len = len(ph.as_string)
         niche_count = 0
         for candidate in pool:
             dist = Population.hamming_distance(candidate, ph) / float(str_len)
@@ -173,8 +168,8 @@ class Population:
         return child1, child2
 
     def create_from_crossover_bits(self, ph1, ph2):
-        ph1dna = ph1.get_binary_string()
-        ph2dna = ph2.get_binary_string()
+        ph1dna = ph1.as_string
+        ph2dna = ph2.as_string
         assert(len(ph1dna) == len(ph2dna))
         a = random.randint(0, len(ph1dna) - 1)
         b = random.randint(0, len(ph2dna) - 1)
@@ -190,8 +185,8 @@ class Population:
             child2dna.append(parents_dna[1][i])
             if i == a or i == b:
                 parents_dna[0], parents_dna[1] = parents_dna[1], parents_dna[0]
-        child1.set_from_dna("".join(child1dna))
-        child2.set_from_dna("".join(child2dna))
+        child1.as_string = "".join(child1dna)
+        child2.as_string = "".join(child2dna)
         return child1, child2
 
     def create_new_generation(self):
@@ -211,10 +206,10 @@ class Population:
             else:
                 self.latest_idn += 1
                 child1 = Phenotype(self.latest_idn)
-                child1.set_from_dna(winner1.get_binary_string())
+                child1.as_string = winner1.as_string
                 self.latest_idn += 1
                 child2 = Phenotype(self.latest_idn)
-                child2.set_from_dna(winner2.get_binary_string())
+                child2.as_string = winner2.as_string
             if self.mutation_rate > 0:
                 child1.mutate(self.mutation_rate)
                 child2.mutate(self.mutation_rate)

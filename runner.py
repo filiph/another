@@ -60,7 +60,7 @@ class Runner:
             try:
                 FNULL = open(os.devnull, 'w')
                 # TODO: set render resolution according to fullscreen resolution
-                proc = subprocess.Popen([PATH_TO_RENDER_SH, ph.get_binary_string(), 
+                proc = subprocess.Popen([PATH_TO_RENDER_SH, ph.as_string,
                     self.get_phenotype_image_path(ph)], stdout=FNULL)
                         #stderr=subprocess.PIPE
                 self.running_procs.append(proc)
@@ -104,7 +104,7 @@ class Runner:
 
     def get_phenotype_image_path(self, ph):
         # TODO: better
-        return PATH_TO_SCRIPT + "/generation" + str(ph.generation) + "/" + ph.get_binary_string() + ".jpg"
+        return PATH_TO_SCRIPT + "/generation" + str(ph.generation) + "/" + ph.as_string + ".jpg"
 
     def check_image_available(self, ph):
         # TODO: check against a list (cached)
@@ -162,7 +162,7 @@ class Runner:
 
     def show_phenotype_image(self, ph):
         print("Showing phenotype " + str(ph.idn) + "\tgen " + str(ph.generation) +
-                "\tdna " + ph.get_binary_string() + "\ty/n " + str(ph.yes + ph.no))
+                "\tdna " + ph.as_string + "\ty/n " + str(ph.yes + ph.no))
         blitdata = rationalSizer(pygame.image.load(self.get_phenotype_image_path(ph)), self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
 

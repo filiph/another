@@ -36,15 +36,15 @@ ph = Phenotype(0)
 if dna == "":
     ph.randomize()
 else:
-    ph.set_from_dna(dna)
+    ph.as_string = dna
 
-path = '//generation' + str(ph.generation) + "/" + ph.get_binary_string()  # + "_camera_" + str(c)
+path = '//generation' + str(ph.generation) + "/" + ph.as_string  # + "_camera_" + str(c)
 for arg in sys.argv:
     words = arg.split('=')
     if (words[0] == "out"):
         path = words[1]
 
-print('Rendering phenotype with dna ' + ph.get_binary_string())
+print('Rendering phenotype with dna ' + ph.as_string)
 
 print('\nPrint Scenes...') 
 sceneKey = bpy.data.scenes.keys()[0] 
@@ -57,7 +57,7 @@ if not ph.show_trees.get_bool():
 
 bpy.data.objects["plane"].particle_systems["ParticleSystem"].seed = ph.trees_seed.get_int()
 
-bpy.data.objects["Lamp"].delta_rotation_euler = (0, ph.sun_position.get_relative_value() * 0.5, 0)
+bpy.data.objects["Lamp"].delta_rotation_euler = (0, ph.sun_position.as_relative_value * 0.5, 0)
 
 # Loop all objects and try to find Cameras 
 print('Looping Cameras') 

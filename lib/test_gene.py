@@ -18,18 +18,25 @@ class TestGene(TestCase):
         for bit_length in range(1, MAX_BITS):
             g = Gene(0, bit_length)
             for integer in range(2 ** bit_length):
-                g.set_from_int(integer)
-                self.assertEqual(g.get_int(), integer)
+                g.as_int = integer
+                self.assertEqual(g.as_int, integer)
 
     def test_get_bool(self):
         g = Gene(0, 1)
-        g.set_from_string("1")
-        self.assertEqual(g.get_bool(), True)
-        g.set_from_string("0")
-        self.assertEqual(g.get_bool(), False)
+        g.as_string = "1"
+        self.assertEqual(g.as_bool, True)
+        g.as_string = "0"
+        self.assertEqual(g.as_bool, False)
         g = Gene(0, 2)
-        g.set_from_string("01")
-        self.assertRaises(AssertionError, g.get_bool)
+        g.as_string = "01"
+        self.assertRaises(AssertionError, lambda: g.as_bool)
+
+    def test_set_bool(self):
+        g = Gene(0, 1)
+        g.as_bool = True
+        self.assertEqual(g.as_bool, True)
+        g.as_bool = False
+        self.assertEqual(g.as_bool, False)
 
     # def test_get_int(self):
     #     self.fail()

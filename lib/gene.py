@@ -6,9 +6,18 @@ class Gene:
     def __init__(self, pos, size):
         self.pos = pos
         self.size = size
-        self.bits = array.array('B')
+        self.bits = array.array('B')  # array of bytes
 
-    def set_from_string(self, string):
+    @property
+    def as_string(self):
+        self.check_initialized()
+        str_list = []
+        for b in self.bits:
+            str_list.append(str(b))
+        return ''.join(str_list)
+
+    @as_string.setter
+    def as_string(self, string):
         assert(len(string) == self.size)
         del self.bits[:]
         i = 0
@@ -24,55 +33,52 @@ class Gene:
     def set_from_mating(self, a_gene, b_gene, relative_strength):
         assert(isinstance(a_gene, Gene))
         assert(isinstance(b_gene, Gene))
-        self.set_from_int(0)  # delete and initialize bits
+        self.as_int = 0  # delete and initialize bits
         for i in range(0, len(self.bits)):
             self.bits[i] = a_gene.bits[i] if random.random() < relative_strength else b_gene.bits[i]
 
-    def set_from_int(self, value):
-        assert(2 ** self.size > value)
-        str = bin(value)[2:].zfill(self.size)
-        self.set_from_string(str)
-
-    def get_bool(self):
+    @property
+    def as_bool(self):
         self.check_initialized()
         assert(self.size == 1)
         return self.bits[0] == 1
 
-    def get_int(self):
-        self.check_initialized()
-        return int(self.get_binary_string(), 2)
+    @as_bool.setter
+    def as_bool(self, value):
+        assert(self.size == 1)
+        if len(self.bits) is 0:
+            # not initialized
+            self.bits.append(0)
+        assert(len(self.bits) == 1)
+        self.bits[0] = 1 if value is True else 0
 
-    def get_max_int(self):
+    @property
+    def as_int(self):
+        self.check_initialized()
+        return int(self.as_string, 2)
+
+    @as_int.setter
+    def as_int(self, value):
+        assert(2 ** self.size > value)
+        string = bin(value)[2:].zfill(self.size)
+        self.as_string = string
+
+    @property
+    def max_int(self):
         self.check_initialized()
         return 2 ** self.size - 1
-
-    def get_binary_string(self):
-        self.check_initialized()
-        str_list = []
-        for b in self.bits:
-            str_list.append(str(b))
-        return ''.join(str_list)
 
     def check_initialized(self):
         assert(len(self.bits) == self.size)
 
-    def get_relative_value(self):
-        return self.get_int() / float(self.get_max_int())
+    @property
+    def as_relative_value(self):
+        return self.as_int / float(self.max_int)
 
     def __str__(self):
         return str(self.bits)
 
     def randomize(self):
-        self.set_from_int(0)  # zero-out
+        self.as_int = 0  # zero-out
         for i in range(0, self.size):
             self.bits[i] = random.choice([0, 1])
-
-# g = Gene(0, 7)
-# print(g.size)
-# g.set_from_string("1001")
-# print(g)
-# g.randomize()
-# print(g)
-# g.set_from_int(15)
-# print(g)
-# print(g.get_int())

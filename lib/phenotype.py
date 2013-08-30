@@ -22,16 +22,16 @@ class Phenotype:
         self.arbitrary_d = Gene(6, 2)
         self.arbitrary_e = Gene(7, 2)
 
-        self.set_all_genes()
+        self._set_all_genes()
 
     def __str__(self):
         str_list = ["Phenotype ", str(self.idn), ": "]
         for gene in self.all_genes:
-            str_list.append(gene.get_binary_string())
+            str_list.append(gene.as_string)
         str_list.append(" (f={0})".format(self.get_fitness_from_votes()))
         return ''.join(str_list)
 
-    def set_all_genes(self):
+    def _set_all_genes(self):
         self.all_genes = []
         for attr, value in vars(self).items():
             if isinstance(value, Gene):
@@ -42,16 +42,24 @@ class Phenotype:
             return 0
         return (1 + (self.yes - self.no) / float(self.yes + self.no)) / float(2)
 
-    def get_binary_string(self):
+    @property
+    def as_string(self):
         str_list = []
         for gene in sorted(self.all_genes, key = lambda gene: gene.pos):
-            str_list.append(gene.get_binary_string())
+            str_list.append(gene.as_string)
         return "".join(str_list)
+
+    @as_string.setter
+    def as_string(self, string):
+        pos = 0
+        for gene in sorted(self.all_genes, key = lambda gene: gene.pos):
+            gene.as_string = string[pos:pos + gene.size]
+            pos += gene.size
 
     # TODO: make this based on genes, or use Gray for num attributes
     def get_similarity(self, other):
-        dna1 = self.get_binary_string()
-        dna2 = other.get_binary_string()
+        dna1 = self.as_string
+        dna2 = other.as_string
         l = len(dna1)
         assert(l, len(dna2))
         matched = 0
@@ -63,12 +71,6 @@ class Phenotype:
     def randomize(self):
         for gene in self.all_genes:
             gene.randomize()
-
-    def set_from_dna(self, dna):
-        pos = 0
-        for gene in sorted(self.all_genes, key = lambda gene: gene.pos):
-            gene.set_from_string(dna[pos:pos + gene.size])
-            pos += gene.size
 
     def set_from_mating(self, parent_a, parent_b, relative_strength):
         self.parent_idns = (parent_a.idn, parent_b.idn)
@@ -95,21 +97,3 @@ class Phenotype:
                 if random.random() < rate:
                     # flip bit
                     gene.bits[i] = 1 if gene.bits[i] == 0 else 0
-
-
-# ph_a = Phenotype(0)
-# ph_a.randomize()
-# print(ph_a)
-# ph_b = Phenotype(1)
-# ph_b.randomize()
-# print(ph_b)
-# ph_c = Phenotype(2)
-# ph_c.set_from_mating(ph_a, ph_b, 0.5)
-# print(ph_c)
-
-# 
-# g = Gene(0, 2)
-# g.randomize()
-# print(g)
-# print(g.get_max_int())
-# print(g.get_relative_value())

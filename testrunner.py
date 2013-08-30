@@ -29,7 +29,7 @@ def get_match(dna1, dna2):
 def get_desirability(ph):
     best_result = 0
     for outcome in DESIRABLE_OUTCOMES:
-        result = get_match(ph.get_binary_string(), outcome)
+        result = get_match(ph.as_string, outcome)
         if result > best_result:
             best_result = result
     return best_result
@@ -45,7 +45,7 @@ def get_generation_desirability(phenotypes):
     for outcome in DESIRABLE_OUTCOMES:
         best_result = 0
         for ph in phenotypes:
-            result = get_match(ph.get_binary_string(), outcome)
+            result = get_match(ph.as_string, outcome)
             if result > best_result:
                 best_result = result
         score += best_result
@@ -56,7 +56,7 @@ def get_best_desirability(pop):
     for outcome in DESIRABLE_OUTCOMES:
         best_result = 0
         for ph in pop.phenotypes:
-            result = get_match(ph.get_binary_string(), outcome)
+            result = get_match(ph.as_string, outcome)
             if result > best_result:
                 best_result = result
         score += best_result
@@ -91,7 +91,7 @@ print("TEST     : Voting finished")
 print("RESULT   : Desirability score of all time best: " +
         str(get_best_desirability(m.pop)))
 for ph in m.pop.get_current_generation():
-    print("Phenotype " + ph.get_binary_string() + " has desirability " +
+    print("Phenotype " + ph.as_string + " has desirability " +
             str(get_desirability(ph)))
 
 print("RESULT   : development of generation desirabilities")
