@@ -154,18 +154,19 @@ class NN:
 def demo():
     # Teach network XOR function
     pat = [
-        [[0,0], [0]],
-        [[0,1], [1]],
-        [[1,0], [1]],
-        [[1,1], [0]]
+        [[0,1,0,1,0,1,0,1], [1]],
+        [[0,1,0,1,0,1,1,1], [0.9]],
+        [[1,1,1,1,1,1,0,0], [0.2]],
+        [[0,0,0,0,0,0,0,0], [0]]
     ]
 
     # create a network with two input, two hidden, and one output nodes
-    n = NN(2, 2, 1)
+    n = NN(8, 4, 1)
     # train it with some patterns
-    n.train(pat)
+    n.train(pat, iterations=1000, N=0.1, M=0.05)
     # test it
     n.test(pat)
+    n.test([[[1,1,1,1,1,1,1,1], [0.3]]])
 
 
 
