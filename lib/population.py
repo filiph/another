@@ -131,12 +131,15 @@ class Population:
     # from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.8352&rep=rep1&type=pdf, p20-21
     def get_shared_fitness(self, ph, pool):
         print("Calculating shared fitness for {0}".format(ph))
+        if (self.shared_fitness_sigma == 0.0):
+            return ph.get_fitness_from_votes()
         str_len = len(ph.as_string)
         niche_count = 0
         for candidate in pool:
             dist = Population.hamming_distance(candidate, ph) / float(str_len)
             if dist < self.shared_fitness_sigma:
-                niche_count += 1 - (dist / self.shared_fitness_sigma) ** self.shared_fitness_alpha
+                niche_count += 1 - (dist / float(self.shared_fitness_sigma)) ** \
+                    self.shared_fitness_alpha
                 print("- found a phenotype in radius (dist={0}) - {1}".format(dist, candidate))
         shared_fitness = ph.get_fitness_from_votes() / niche_count
         print("- final fitness = {0}".format(shared_fitness))
