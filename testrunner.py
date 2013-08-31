@@ -49,21 +49,32 @@ def compensated_mean_and_variance(data):
 str_list = ["#\tSize\tCrossover P\tShared Fitness Sigma\tMutation Rate\tMin "
             "Votes\tImprovement\tImprovement Variance"]
 
+TRIES = 10
+ITERATIONS = 5000
+
+sizes = [10, 15, 20]
+crossover_probabilities = [0.6, 0.7, 0.8, 0.9]
+shared_fitness_sigmas = [0.05]
+mutation_rates = [0.01, 0.02, 0.03, 0.05]
+min_votes_tests = [20]
+
+total_permutations = len(sizes) * len(crossover_probabilities) * len(shared_fitness_sigmas) * \
+                     len(mutation_rates) * len(min_votes_tests)
+
 index = 0
-for size in [10, 20, 50]:
-    for crossover_probability in [0.7, 0.9]:
-        for shared_fitness_sigma in [0.0, 0.05]:
-            for mutation_rate in [0.0, 0.05, 0.1]:
-                for min_votes in [10, 20]:
-                    tries = 10
+for size in sizes:
+    for crossover_probability in crossover_probabilities:
+        for shared_fitness_sigma in shared_fitness_sigmas:
+            for mutation_rate in mutation_rates:
+                for min_votes in min_votes_tests:
                     improvement_results = []
-                    for i in range(tries):
+                    for i in range(TRIES):
                         m = Manager(size=size, crossover_probability=crossover_probability,
                                     shared_fitness_sigma=shared_fitness_sigma,
                                     mutation_rate=mutation_rate, min_votes=min_votes)
                         m.start()
                         runner = Runner(m, objective_function=get_desirability)
-                        runner.run(5000)
+                        runner.run(ITERATIONS)
                         improvement = runner.improvement
                         improvement_results.append(improvement)
                     mean, variance = compensated_mean_and_variance(improvement_results)
@@ -72,6 +83,8 @@ for size in [10, 20, 50]:
                         index, size, crossover_probability, shared_fitness_sigma, mutation_rate,
                         min_votes, mean, variance
                     ))
+                    print("{0:.2%} - PERMUTATION {1}/{2} COMPLETE".format(index / float(
+                        total_permutations), index, total_permutations))
                     print(str_list[-1])
 
 print("== RESULTS ==")

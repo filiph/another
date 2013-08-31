@@ -130,7 +130,7 @@ class Population:
 
     # from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.8352&rep=rep1&type=pdf, p20-21
     def get_shared_fitness(self, ph, pool):
-        print("Calculating shared fitness for {0}".format(ph))
+        #print("Calculating shared fitness for {0}".format(ph))
         if (self.shared_fitness_sigma == 0.0):
             return ph.get_fitness_from_votes()
         str_len = len(ph.as_string)
@@ -140,9 +140,9 @@ class Population:
             if dist < self.shared_fitness_sigma:
                 niche_count += 1 - (dist / float(self.shared_fitness_sigma)) ** \
                     self.shared_fitness_alpha
-                print("- found a phenotype in radius (dist={0}) - {1}".format(dist, candidate))
+                #print("- found a phenotype in radius (dist={0}) - {1}".format(dist, candidate))
         shared_fitness = ph.get_fitness_from_votes() / niche_count
-        print("- final fitness = {0}".format(shared_fitness))
+        #print("- final fitness = {0}".format(shared_fitness))
         return shared_fitness
 
     def get_random_tournament_winner(self, pool):
@@ -198,9 +198,9 @@ class Population:
     def create_new_generation(self):
         print("Creating a new generation number " + str(self.current_generation + 1))
         old_generation = list(self.get_current_generation())
-        print("  - old generation")
-        for member in old_generation:
-            print("    - {0} ({1}/{2})".format(member, member.yes, member.no))
+        # print("  - old generation")
+        # for member in old_generation:
+        #     print("    - {0} ({1}/{2})".format(member, member.yes, member.no))
         print("Mating...")
         self.current_generation += 1
         children = []
@@ -223,10 +223,10 @@ class Population:
             child2.generation = self.current_generation
             children.append(child1)
             children.append(child2)
-            print("Parents and children:")
-            print(" - " + str(winner1))
-            print(" - " + str(winner2))
-            print(" - " + str(child1))
-            print(" - " + str(child2))
+            # print("Parents and children:")
+            # print(" - " + str(winner1))
+            # print(" - " + str(winner2))
+            # print(" - " + str(child1))
+            # print(" - " + str(child2))
         self.phenotypes.extend(children)
         return children
