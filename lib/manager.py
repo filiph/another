@@ -38,14 +38,14 @@ class Manager:
             return None
 
     def breed_next_generation(self):
-        for ph in self.pop.get_current_generation():
-            nn_pattern_input = []
-            for gene in ph.all_genes:
-                nn_pattern_input.append(gene.as_int)
-            nn_pattern_output = [ph.get_fitness_from_votes()]
-            nn_pattern = [nn_pattern_input, nn_pattern_output]
-            print(nn_pattern)
-            self.nn_train_set.append(nn_pattern)
+        # for ph in self.pop.get_current_generation():
+        #     nn_pattern_input = []
+        #     for gene in ph.all_genes:
+        #         nn_pattern_input.append(gene.as_int)
+        #     nn_pattern_output = [ph.get_fitness_from_votes()]
+        #     nn_pattern = [nn_pattern_input, nn_pattern_output]
+        #     print(nn_pattern)
+        #     self.nn_train_set.append(nn_pattern)
 
         print("TEST     : Creating new generation ({0})".format(self.pop.current_generation + 1))
         new_generation = self.pop.create_new_generation()

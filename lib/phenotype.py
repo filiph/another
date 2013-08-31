@@ -1,5 +1,7 @@
 from lib.gene import *
 
+DEBUG = False
+
 class Phenotype:
     INITIAL_HITPOINTS = 10
 
@@ -25,6 +27,8 @@ class Phenotype:
         self._set_all_genes()
 
     def __str__(self):
+        if not DEBUG:
+            return "Phenotype {}".format(self.idn)
         str_list = ["Phenotype ", str(self.idn), ": "]
         for gene in self.all_genes:
             str_list.append(gene.as_string)
