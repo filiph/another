@@ -2,10 +2,10 @@
 
 # Rendering script from: http://www.blender.org/forum/viewtopic.php?t=19102
 
-import bpy, bgl, blf, sys
+import bpy, bgl, blf, sys, os
 from bpy import data, ops, props, types, context
 
-sys.path.append("/Users/filiph/dev/blender")
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from lib.phenotype import *
 
@@ -31,6 +31,7 @@ for arg in sys.argv:
     words = arg.split('=')
     if (words[0] == "dna"):
         dna = words[1]
+        print("Found dna arg: {}".format(dna))
 
 ph = Phenotype(0)
 if dna == "":
@@ -52,10 +53,10 @@ print('Using Scene['  + sceneKey + ']')
 
 print("Modifying scene according to DNA")
 
-if not ph.show_trees.get_bool():
+if not ph.show_trees.as_bool:
     bpy.data.objects["Tree"].hide_render = True
 
-bpy.data.objects["plane"].particle_systems["ParticleSystem"].seed = ph.trees_seed.get_int()
+bpy.data.objects["plane"].particle_systems["ParticleSystem"].seed = ph.trees_seed.as_int
 
 bpy.data.objects["Lamp"].delta_rotation_euler = (0, ph.sun_position.as_relative_value * 0.5, 0)
 

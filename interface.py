@@ -18,9 +18,9 @@ FULLSCREEN = False
 RESOLUTION = (800, 600)
 PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_POP_DUMP = PATH_TO_SCRIPT + "/population.dump"
-PATH_TO_RENDER_SH = PATH_TO_SCRIPT + "/dnarender.sh"
+PATH_TO_RENDER_SH = PATH_TO_SCRIPT + "/render_dna.sh"
 
-class Runner:
+class Interface:
     def __init__(self):
         self.running_procs = []
         self.render_backlog = []
@@ -56,7 +56,7 @@ class Runner:
         if self.check_image_available(ph):
             print("- image already exists")
             return
-        if self.check_image_renders() < Runner.MAX_PARALLEL_RENDERS:
+        if self.check_image_renders() < Interface.MAX_PARALLEL_RENDERS:
             try:
                 FNULL = open(os.devnull, 'w')
                 # TODO: set render resolution according to fullscreen resolution
@@ -167,6 +167,6 @@ class Runner:
         self.main_surface = tran_none(self.main_surface, blitdata)
 
 if __name__ == '__main__':
-    runner = Runner()
-    runner.init_pop()
-    runner.run()
+    interface = Interface()
+    interface.init_pop()
+    interface.run()
