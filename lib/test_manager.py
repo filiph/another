@@ -32,6 +32,6 @@ class TestManager(TestCase):
 
     def tearDown(self):
         try:
-            os.remove(Manager._DEFAULT_PATH_TO_SAVE_FILE)
+            os.remove(Manager._DEFAULT_SAVE_FILE_NAME)
         except OSError:
             pass

@@ -6,7 +6,7 @@ from lib.population import *
 class Manager:
     """ Class manages the evolution, tracks state of the population, etc. """
     def __init__(self, size=20, crossover_probability=0.7, shared_fitness_sigma=0.05,
-                 shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10):
+                 shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10, directory=os.getcwd()):
         self.pop = None
         self.pop_size = size
         self.crossover_probability = crossover_probability
@@ -16,6 +16,10 @@ class Manager:
         self.min_votes = min_votes
 
         self.nn_train_set = []  # Set of past phenotype performance for neural network training.
+
+        self.directory = directory
+
+        self.current_phenotype = None
 
     def start(self):
         """ Starts or re-starts population from scratch. """
@@ -28,9 +32,11 @@ class Manager:
     def close(self):
         pass
 
-    _DEFAULT_PATH_TO_SAVE_FILE = os.getcwd() + "/manager_state.dump"
+    _DEFAULT_SAVE_FILE_NAME = "manager_state.dump"
 
-    def save(self, path=_DEFAULT_PATH_TO_SAVE_FILE):
+    def save(self, path=None):
+        if path is None:
+            path = os.path.join(self.directory, Manager._DEFAULT_SAVE_FILE_NAME)
         try:
             with open(path, "wb") as f:
                 pickle.dump(self.__dict__, f)
@@ -38,7 +44,9 @@ class Manager:
             print("ERROR: Couldn't write state to file {}.".format(path))
             raise
 
-    def load(self, path=_DEFAULT_PATH_TO_SAVE_FILE):
+    def load(self, path=None):
+        if path is None:
+            path = os.path.join(self.directory, Manager._DEFAULT_SAVE_FILE_NAME)
         try:
             with open(path, "rb") as f:
                 tmp_dict = pickle.load(f)
@@ -55,12 +63,12 @@ class Manager:
         new generation if there is a new generation, or None if there isn't.
         """
         if self.pop.is_ready_for_next_generation():
-            new_generation = self.breed_next_generation()
+            new_generation = self._breed_next_generation()
             return new_generation
         else:
             return None
 
-    def breed_next_generation(self):
+    def _breed_next_generation(self):
         # for ph in self.pop.get_current_generation():
         #     nn_pattern_input = []
         #     for gene in ph.all_genes:
