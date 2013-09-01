@@ -9,7 +9,7 @@ def default_objective_function(ph):
     """
     return int(ph.as_string, 2) / float(2 ** len(ph.as_string))
 
-class Runner:
+class SimulationRunner:
     """
     Runs a concrete setup of a simulation.
     """

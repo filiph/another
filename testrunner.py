@@ -4,7 +4,7 @@ import sys
 import random
 
 from lib.manager import Manager
-from lib.runner import Runner
+from lib.simulation_runner import SimulationRunner
 
 DESIRABLE_OUTCOMES = [
         "1111111111111111",
@@ -73,7 +73,7 @@ for size in sizes:
                                     shared_fitness_sigma=shared_fitness_sigma,
                                     mutation_rate=mutation_rate, min_votes=min_votes)
                         m.start()
-                        runner = Runner(m, objective_function=get_desirability)
+                        runner = SimulationRunner(m, objective_function=get_desirability)
                         runner.run(ITERATIONS)
                         improvement = runner.improvement
                         improvement_results.append(improvement)
