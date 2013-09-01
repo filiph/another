@@ -28,7 +28,6 @@ class Interface:
         self.fullscreen = FULLSCREEN
         self.resolution = RESOLUTION
 
-
     def init_pop(self):
         try:
             with open(PATH_TO_POP_DUMP, "rb") as f:

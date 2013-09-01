@@ -17,7 +17,8 @@ class Manager:
 
         self.nn_train_set = []  # Set of past phenotype performance for neural network training.
 
-        self.directory = directory
+        self.root_directory = directory
+        self.images_directory = os.path.join(self.root_directory, "images", "")
 
         self.current_phenotype = None
 
@@ -36,7 +37,7 @@ class Manager:
 
     def save(self, path=None):
         if path is None:
-            path = os.path.join(self.directory, Manager._DEFAULT_SAVE_FILE_NAME)
+            path = os.path.join(self.root_directory, Manager._DEFAULT_SAVE_FILE_NAME)
         try:
             with open(path, "wb") as f:
                 pickle.dump(self.__dict__, f)
@@ -46,7 +47,7 @@ class Manager:
 
     def load(self, path=None):
         if path is None:
-            path = os.path.join(self.directory, Manager._DEFAULT_SAVE_FILE_NAME)
+            path = os.path.join(self.root_directory, Manager._DEFAULT_SAVE_FILE_NAME)
         try:
             with open(path, "rb") as f:
                 tmp_dict = pickle.load(f)
