@@ -15,6 +15,7 @@ class TestImageRenderer(TestCase):
         images_dir = tempfile.mkdtemp()
         renderer = ImageRenderer(images_dir)
         self.assertListEqual(renderer.rendered_images, [])
+        renderer.close()
         shutil.rmtree(images_dir)
 
     def test_jpeg_file_in_images_dir(self):
@@ -24,6 +25,7 @@ class TestImageRenderer(TestCase):
         image.save(image_filename)
         renderer = ImageRenderer(images_dir)
         self.assertIn(image_filename, renderer.rendered_images)
+        renderer.close()
         shutil.rmtree(images_dir)
 
     def test_start_render(self):
@@ -42,4 +44,24 @@ class TestImageRenderer(TestCase):
             renderer.check_image_renders()
         self.assertTrue(renderer.check_image_available(ph))
         self.assertEqual(len(renderer.running_procs), 0)
+        renderer.close()
+        shutil.rmtree(images_dir)
+
+    def test_renderer_close(self):
+        images_dir = tempfile.mkdtemp()
+        renderer = ImageRenderer(images_dir)
+        ph = Phenotype(-1)
+        ph.randomize()
+        ph.as_string = "1" * len(ph.as_string)  # set DNA to "1111111...111"
+        renderer.start_image_render(ph)
+        self.assertTrue(renderer.is_working)
+        time.sleep(0.1)
+        renderer.check_image_renders()
+        ph, proc = renderer.running_procs[0]
+        self.assertTrue(renderer.is_working)
+        self.assertIsNone(proc.poll())
+        renderer.close()
+        time.sleep(0.1)
+        self.assertFalse(renderer.is_working)
+        self.assertIsNotNone(proc.poll())
         shutil.rmtree(images_dir)

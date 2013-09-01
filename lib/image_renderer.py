@@ -10,6 +10,9 @@ _DEFAULT_RENDER_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../
 class ImageRenderer:
     """
     Takes care of rendering images, keeps track of rendering processes, returns file paths.
+
+    Don't forget to call `close()` when finished. This will make sure all renders are properly
+    terminated.
     """
     def __init__(self, images_directory, render_executable_path=_DEFAULT_RENDER_EXECUTABLE):
         self.images_directory = images_directory
@@ -118,3 +121,8 @@ class ImageRenderer:
                 count += 1
         return count
 
+    def close(self):
+        self.render_backlog.clear()
+        for ph, proc in self.running_procs:
+            proc.terminate()
+        self.running_procs.clear()
