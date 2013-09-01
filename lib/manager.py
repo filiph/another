@@ -1,4 +1,6 @@
-#import sqlite3
+import os
+import pickle
+import sqlite3
 from lib.population import *
 
 class Manager:
@@ -23,8 +25,29 @@ class Manager:
                               mutation_rate=self.mutation_rate, min_votes=self.min_votes)
         self.pop.create_first_generation()
 
-    def load_state(self, path):
-        pass  # load state from an sqlite (?) file
+    def close(self):
+        pass
+
+    _DEFAULT_PATH_TO_SAVE_FILE = os.getcwd() + "/manager_state.dump"
+
+    def save(self, path=_DEFAULT_PATH_TO_SAVE_FILE):
+        try:
+            with open(path, "wb") as f:
+                pickle.dump(self.__dict__, f)
+        except IOError:
+            print("ERROR: Couldn't write state to file {}.".format(path))
+            raise
+
+    def load(self, path=_DEFAULT_PATH_TO_SAVE_FILE):
+        try:
+            with open(path, "rb") as f:
+                tmp_dict = pickle.load(f)
+        except IOError:
+            print("ERROR: Save file {} not found.".format(path))
+            raise
+
+        self.__dict__.update(tmp_dict)
+
 
     def step(self):
         """

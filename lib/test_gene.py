@@ -1,7 +1,7 @@
 from unittest import TestCase
 from lib.gene import Gene
 
-__author__ = 'filiph'
+__author__ = 'Filip Hracek'
 
 class TestGene(TestCase):
     # def test_set_from_string(self):

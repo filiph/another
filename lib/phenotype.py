@@ -35,6 +35,10 @@ class Phenotype:
         str_list.append(" (f={0})".format(self.get_fitness_from_votes()))
         return ''.join(str_list)
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+            and self.as_string == other.as_string)
+
     def _set_all_genes(self):
         self.all_genes = []
         for attr, value in vars(self).items():
@@ -65,7 +69,7 @@ class Phenotype:
         dna1 = self.as_string
         dna2 = other.as_string
         l = len(dna1)
-        assert(l, len(dna2))
+        assert(l == len(dna2))
         matched = 0
         for i in range(0, l):
             if dna1[i] == dna2[i]:
