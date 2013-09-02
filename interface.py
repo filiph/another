@@ -32,6 +32,9 @@ class Interface:
             print("Waiting for render of all images first.")
             self.renderer.wait_until_done()
 
+    CHECK_INTERVAL = 1
+    CHECK_USER_EVENT = pygame.USEREVENT + 1
+
     def run(self):
         # Initialize PyGame
         pygame.display.init()
@@ -41,6 +44,8 @@ class Interface:
         else:
             self.main_surface = pygame.display.set_mode(self.resolution)
         pygame.display.update()
+
+        pygame.time.set_timer(self.CHECK_USER_EVENT, self.CHECK_INTERVAL * 1000)
 
         self.show_next()
 
@@ -56,18 +61,15 @@ class Interface:
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
                     #TODO: save votes via manager
                     self.manager.current_phenotype.yes += 1
-                    self.renderer.check_image_renders()
                     self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
                     self.manager.current_phenotype.no += 1
-                    self.renderer.check_image_renders()
                     self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     self.manager.current_phenotype.meh += 1
-                    self.renderer.check_image_renders()
                     self.show_next()
-
-                    # TODO: find better place for this (auto-advance)
+                elif event.type == self.CHECK_USER_EVENT:
+                    self.renderer.check_image_renders()
                     new_generation = self.manager.step()
                     if new_generation is not None:
                         for ph in new_generation:
