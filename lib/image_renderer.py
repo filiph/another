@@ -1,6 +1,7 @@
 import os
 import subprocess
 from PIL import Image
+import time
 
 __author__ = 'Filip Hracek'
 
@@ -117,9 +118,14 @@ class ImageRenderer:
                     self.rendered_images.append(self._construct_image_path(ph))
                 if self.render_backlog:
                     self.start_image_render(self.render_backlog.pop(0))
+                    count += 1
             else:  # process still running
                 count += 1
         return count
+
+    def wait_until_done(self):
+        while self.check_image_renders() > 0:
+            time.sleep(0.1)
 
     def close(self):
         self.render_backlog.clear()

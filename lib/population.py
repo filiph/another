@@ -8,7 +8,7 @@ class Population:
         self.phenotypes = []
         self.winners = []
         self.current = None
-        self.current_generation = -1
+        self.current_generation_number = -1
         self.latest_idn = 0
 
         self.generation_size = size
@@ -28,51 +28,12 @@ class Population:
             self.phenotypes.append(ph)
             self.latest_idn = i
             first_ones.append(ph)
-        self.current_generation = 0
+        self.current_generation_number = 0
         self.current = self.phenotypes[0]
         return first_ones
 
-    # TODO: should be in Manager?
-    def get_next(self, check_callback=None):
-        """ Returns the next phenotype to be shown. """
-        assert(len(self.phenotypes) > 0)
-        if self.current:
-            assert(len(self.phenotypes) > 1)
-        candidate = None
-        while True:
-            candidate = self.get_random()
-            if (candidate is not self.current):
-                if (check_callback == None):
-                    break
-                elif check_callback(candidate):
-                    break
-        self.current = candidate
-        return candidate
-
-    def calculate_show_score(self, ph):
-        """ Returns int which represents the chance with which the given phenotype should be shown. """
-        score = 0
-        score += ph.generation + 1  # more recent generations are more likely to show
-        score *= 2 if (ph.yes + ph.no < self.min_votes) else 1  # non-resolved phenotypes are much more
-        # likely to show
-        # TODO: cache score - it is retrieved twice per phenotype
-        return score
-
-    # inspired by http://stackoverflow.com/a/14916069
-    def get_random(self):
-        score_sum = 0
-        for ph in self.phenotypes:
-            score_sum += self.calculate_show_score(ph)
-        choice = random.randint(0, score_sum - 1)
-        pos = 0
-        for ph in self.phenotypes:
-            pos += self.calculate_show_score(ph)
-            if (choice < pos):
-                return ph
-        assert(False)
-
     def get_current_generation(self):
-        return self.get_generation(self.current_generation)
+        return self.get_generation(self.current_generation_number)
 
     def get_generation(self, number):
         def fitting(ph): return ph.generation == number
@@ -196,13 +157,13 @@ class Population:
         return child1, child2
 
     def create_new_generation(self):
-        print("Creating a new generation number " + str(self.current_generation + 1))
+        print("Creating a new generation number " + str(self.current_generation_number + 1))
         old_generation = list(self.get_current_generation())
         # print("  - old generation")
         # for member in old_generation:
         #     print("    - {0} ({1}/{2})".format(member, member.yes, member.no))
         print("Mating...")
-        self.current_generation += 1
+        self.current_generation_number += 1
         children = []
         for i in range(int(self.generation_size / 2)):
             winner1 = self.get_random_tournament_winner(old_generation)
@@ -219,8 +180,8 @@ class Population:
             if self.mutation_rate > 0:
                 child1.mutate(self.mutation_rate)
                 child2.mutate(self.mutation_rate)
-            child1.generation = self.current_generation
-            child2.generation = self.current_generation
+            child1.generation = self.current_generation_number
+            child2.generation = self.current_generation_number
             children.append(child1)
             children.append(child2)
             # print("Parents and children:")

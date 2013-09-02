@@ -1,116 +1,39 @@
 # Slideshow from http://bazaar.launchpad.net/~matio/pypicslideshow/main/view/head:/pypicslideshow.py
 
+import os
+
 import pygame
 from pygame import *
-from pygame.locals import *
-import os
-import sys
-from random import choice
-import pickle
-import subprocess
-import time
 
-from lib.slideshow import getFilePaths, rationalSizer, tran_none, imageTypes
+from lib.image_renderer import ImageRenderer
+from lib.manager import Manager
+from lib.slideshow import rationalSizer, tran_none
 
-from lib.population import *
 
 FULLSCREEN = False
 RESOLUTION = (800, 600)
 PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_POP_DUMP = PATH_TO_SCRIPT + "/population.dump"
-PATH_TO_RENDER_SH = PATH_TO_SCRIPT + "/render_dna.sh"
 
 class Interface:
-    def __init__(self):
-        self.running_procs = []
-        self.render_backlog = []
+    def __init__(self, manager, renderer, fullscreen=FULLSCREEN, resolution=RESOLUTION):
+        self.manager = manager
+        self.renderer = renderer
 
-        self.fullscreen = FULLSCREEN
-        self.resolution = RESOLUTION
+        self.fullscreen = fullscreen
+        self.resolution = resolution  # will be overridden if fullscreen, though
 
-    def init_pop(self):
-        try:
-            with open(PATH_TO_POP_DUMP, "rb") as f:
-                self.pop = pickle.load(f)
-                print("Population loaded from " + PATH_TO_POP_DUMP)
-        except IOError:
-            print("Population file not found. Creating first generation.")
-            self.pop = Population()
-            self.pop.create_first_generation()
-            for ph in self.pop.phenotypes:
-                self.start_image_render(ph)
-            sys.stdout.write("Waiting for render of first batch to end")
-            sys.stdout.flush()
-            while self.check_image_renders() > 0:
-                sys.stdout.write(".")
-                sys.stdout.flush()
-                time.sleep(1)
+        all_images_ready = True
+        for ph in self.manager.pop.phenotypes:
+            started = self.renderer.start_image_render(ph)
+            if started:
+                all_images_ready = False
 
-
-    RENDER_TIMEOUT = 60
-    MAX_PARALLEL_RENDERS = 2
-
-    def start_image_render(self, ph):
-        print("Start render of phenotype " + str(ph.idn))
-        if self.check_image_available(ph):
-            print("- image already exists")
-            return
-        if self.check_image_renders() < Interface.MAX_PARALLEL_RENDERS:
-            try:
-                FNULL = open(os.devnull, 'w')
-                # TODO: set render resolution according to fullscreen resolution
-                proc = subprocess.Popen([PATH_TO_RENDER_SH, ph.as_string,
-                    self.get_phenotype_image_path(ph)], stdout=FNULL)
-                        #stderr=subprocess.PIPE
-                self.running_procs.append(proc)
-                print("- process started")
-            except OSError as e:
-                print(str(e))
-                raise
-        else:
-            print("- too many processes running, added to backlog")
-            self.render_backlog.append(ph)
-
-    def check_image_renders(self):
-        """ Checks the status of background image renders. Returns number of running processes. """
-        count = 0
-        for proc in self.running_procs:
-            retcode = proc.poll()
-            if retcode is not None:  # process finished
-                self.running_procs.remove(proc)
-                if retcode != 0:
-                    print("ERROR: Render process failed")
-                    print(proc.stderr)
-                    # TODO: do something about it
-                else:
-                    print("Render process finished successfully.")
-                if self.render_backlog:
-                    self.start_image_render(self.render_backlog.pop(0))
-            else:  # process still running
-                count += 1
-        return count
-
-
-    def save_pop_to_file(self):
-        print("Trying to save population...")
-        try:
-            with open(PATH_TO_POP_DUMP, "wb") as f:
-                pickle.dump(self.pop, f)
-                print("Population saved to " + PATH_TO_POP_DUMP)
-        except IOError:
-            print("ERROR: Couldn't write population to file.")
-            raise
-
-    def get_phenotype_image_path(self, ph):
-        # TODO: better
-        return PATH_TO_SCRIPT + "/generation" + str(ph.generation) + "/" + ph.as_string + ".jpg"
-
-    def check_image_available(self, ph):
-        # TODO: check against a list (cached)
-        return os.path.isfile(self.get_phenotype_image_path(ph))
+        if not all_images_ready:
+            print("Waiting for render of all images first.")
+            self.renderer.wait_until_done()
 
     def run(self):
-        ## Initialize PyGame
+        # Initialize PyGame
         pygame.display.init()
         if self.fullscreen:
             self.resolution = pygame.display.list_modes()[0]
@@ -119,53 +42,56 @@ class Interface:
             self.main_surface = pygame.display.set_mode(self.resolution)
         pygame.display.update()
 
-        self.show_phenotype_image(self.pop.current)
+        self.show_next()
 
         while True:
             for event in pygame.event.get():
-                if (event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
-                    self.save_pop_to_file()
+                if (event.type == pygame.QUIT or
+                        (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
+                    self.manager.save()
+                    self.manager.close()
+                    self.renderer.close()
                     pygame.quit()
                     return 0
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
-                    self.pop.current.yes += 1
-                    self.check_image_renders()
-                    ph = self.pop.get_next(self.check_image_available)
-                    self.show_phenotype_image(ph)
+                    #TODO: save votes via manager
+                    self.manager.current_phenotype.yes += 1
+                    self.renderer.check_image_renders()
+                    self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-                    self.pop.current.no += 1
-                    self.check_image_renders()
-                    ph = self.pop.get_next(self.check_image_available)
-                    self.show_phenotype_image(ph)
+                    self.manager.current_phenotype.no += 1
+                    self.renderer.check_image_renders()
+                    self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    self.pop.current.meh += 1
-                    self.check_image_renders()
-                    ph = self.pop.get_next(self.check_image_available)
-                    self.show_phenotype_image(ph)
+                    self.manager.current_phenotype.meh += 1
+                    self.renderer.check_image_renders()
+                    self.show_next()
 
                     # TODO: find better place for this (auto-advance)
-                    if self.pop.is_ready_for_next_generation():
-                        children = self.pop.create_new_generation()
-                        for child in children:
-                            child.mutate(0.1)
-                            self.start_image_render(child)
+                    new_generation = self.manager.step()
+                    if new_generation is not None:
+                        for ph in new_generation:
+                            self.renderer.start_image_render(ph)
 
             pygame.time.wait(20)  # let the processor chill for a bit
 
-
-                # elif event.type == pygame.USEREVENT + 1:
-                #     i += 1
-                #     if i >= len(images):
-                #         i = 0
-                #     save_pop_to_file()
-
     def show_phenotype_image(self, ph):
-        print("Showing phenotype " + str(ph.idn) + "\tgen " + str(ph.generation) +
-                "\tdna " + ph.as_string + "\ty/n " + str(ph.yes + ph.no))
-        blitdata = rationalSizer(pygame.image.load(self.get_phenotype_image_path(ph)), self.resolution)
+        print("Showing phenotype {}".format(ph))
+        blitdata = rationalSizer(pygame.image.load(self.renderer.get_image_path(ph)),
+                                 self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
 
+    def show_next(self):
+        ph = self.manager.get_next_phenotype(self.renderer.check_image_available)
+        self.show_phenotype_image(ph)
+
 if __name__ == '__main__':
-    interface = Interface()
-    interface.init_pop()
+    manager = Manager(size=5, min_votes=5, directory=os.getcwd())
+    try:
+        manager.load()
+    except IOError:
+        manager.create_from_scratch()
+    renderer = ImageRenderer(os.path.join(os.getcwd(), "images"))
+
+    interface = Interface(manager, renderer)
     interface.run()

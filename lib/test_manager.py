@@ -19,7 +19,7 @@ class TestManager(TestCase):
 
     def test_save_load_phenotypes(self):
         m = Manager()
-        m.start()
+        m.create_from_scratch()
         phenotypes = list(m.pop.phenotypes)
         m.save()
         m.close()

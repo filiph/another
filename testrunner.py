@@ -72,7 +72,7 @@ for size in sizes:
                         m = Manager(size=size, crossover_probability=crossover_probability,
                                     shared_fitness_sigma=shared_fitness_sigma,
                                     mutation_rate=mutation_rate, min_votes=min_votes)
-                        m.start()
+                        m.create_from_scratch()
                         runner = SimulationRunner(m, objective_function=get_desirability)
                         runner.run(ITERATIONS)
                         improvement = runner.improvement
