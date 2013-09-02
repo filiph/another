@@ -4,6 +4,7 @@
 __pycache__
 *.pyc
 population.dump
+manager_state.dump
 *.blend1
 *.blend2
 tutorial.blend
