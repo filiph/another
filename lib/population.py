@@ -5,9 +5,11 @@ from lib.phenotype import Phenotype
 class Population:
     def __init__(self, size=20, crossover_probability=0.7, shared_fitness_sigma=0.05,
                  shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10):
+        # TODO: organize phenotypes into generation arrays - then construct .phenotypes using a
+        #       generator
         self.phenotypes = []
         self.winners = []
-        self.current = None
+        self.current = None # TODO: XXX
         self.current_generation_number = -1
         self.latest_idn = 0
 

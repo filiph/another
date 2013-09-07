@@ -130,6 +130,7 @@ class Manager:
         print("TEST     : Creating new generation ({0})".format(self.pop.current_generation_number + 1))
         new_generation = self.pop.create_new_generation()
         # TODO: involve neural network in selecting from children
+        # TODO: ressurect old-time winners
         return new_generation
 
 # TODO: train neural network in another process
