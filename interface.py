@@ -74,6 +74,8 @@ class Interface:
                     if new_generation is not None:
                         for ph in new_generation:
                             self.renderer.start_image_render(ph)
+                    # TODO: if idle, call Manager.parallelComputation() - creates 'Australia'
+                    #       phenotypes that can be shown and voted for.
 
             pygame.time.wait(20)  # let the processor chill for a bit
 
