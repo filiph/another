@@ -28,3 +28,11 @@ fromat and the output filename as 2 command line arguments.)
 * PyGame
 * Blender
 * Gimp
+
+# Credits
+
+http://www.flickr.com/photos/argenberg/86967955/sizes/o/
+http://www.flickr.com/photos/md9/2479076483/sizes/o/
+http://www.flickr.com/photos/8684894@N06/5798544288/sizes/l/
+http://www.flickr.com/photos/brenda-starr/3941615637/sizes/o/
+http://www.flickr.com/photos/nilsenpics/7977312553/sizes/l/
