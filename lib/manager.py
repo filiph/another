@@ -3,6 +3,12 @@ import pickle
 import sqlite3
 from lib.population import *
 
+class ManagerHistory:
+    pass # TODO: save votes to persistent storage, one row/vote at a time
+
+class ManagerHistorySQLite(ManagerHistory):
+    pass # TODO: Implement ManagerHistory as SQLite
+
 class Manager:
     """ Class manages the evolution, tracks state of the population, etc. """
     def __init__(self, size=20, crossover_probability=0.7, shared_fitness_sigma=0.05,

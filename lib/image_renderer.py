@@ -7,6 +7,9 @@ __author__ = 'Filip Hracek'
 
 _DEFAULT_RENDER_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../render_dna.sh"
 
+class RenderJob:
+    pass # TODO: contain info about process (render + gimp), methods: start(), check(), stop()
+
 
 class ImageRenderer:
     """
