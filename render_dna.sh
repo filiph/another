@@ -1,4 +1,5 @@
 #!/bin/sh
-/Applications/Blender/blender.app/Contents/MacOS/blender \
-  -b /Users/filiph/dev/blender/test1.blend \
-  -P /Users/filiph/dev/blender/render_dna.py -- dna=$1 out=$2
+. ./config.sh
+$BLENDER_PATH \
+  -b /home/filiph/dev/another/test1.blend \
+  -P /home/filiph/dev/another/render_dna.py -- dna=$1 out=$2
