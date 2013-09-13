@@ -13,3 +13,4 @@ blendlib
 *.bak
 notes/
 .idea
+config.sh
