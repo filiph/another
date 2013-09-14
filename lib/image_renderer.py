@@ -3,12 +3,109 @@ import subprocess
 from PIL import Image
 import time
 
+import logging
+
 __author__ = 'Filip Hracek'
 
 _DEFAULT_RENDER_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../render_dna.sh"
+_DEFAULT_GIMP_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../apply_painting.sh"
 
 class RenderJob:
-    pass # TODO: contain info about process (render + gimp), methods: start(), check(), stop()
+    RENDER_TIMEOUT = 5 * 60 # TODO: implement timeout
+
+    def __init__(self, ctx, phenotype):
+        self.phenotype = phenotype
+        self.render_process = None
+        self.gimp_process = None
+        self.dev_null = None
+
+        self.ctx = ctx
+
+        self.done = False
+        self.done_with_error = False
+        # TODO self.cannot_render
+
+    def start(self, on_error=None):
+        self.dev_null = open(os.devnull, 'w')
+        self.on_error = on_error
+        self._start_render_process()
+
+    def _start_render_process(self, safe_mode=False):
+        self.safe_mode = safe_mode
+        try:
+            # TODO: set render resolution according to fullscreen resolution
+            logging.info("Starting render process for %s.", self.phenotype)
+            self.render_process = subprocess.Popen(
+                [self.ctx.render_executable, self.phenotype.as_string,
+                 self.ctx.construct_image_path(self.phenotype)], stdout=self.dev_null)
+        except OSError as e:
+            logging.error("Render process for %s failed: %s", self.phenotype, e)
+            if callable(self.on_error): self.on_error()
+            self.done_with_error = True
+            self.stop()
+
+    def _start_gimp_process(self):
+        try:
+            logging.info("Starting gimp process for %s.", self.phenotype)
+            self.gimp_process = subprocess.Popen(
+                [self.ctx.gimp_executable, self.ctx.construct_image_path(self.phenotype)],
+                stdout=self.dev_null)
+        except OSError as e:
+            logging.error("Gimp process for %s failed: %s", self.phenotype, e)
+            if callable(self.on_error): self.on_error()
+            self.done_with_error = True
+            self.stop()
+
+
+    def update(self):
+        if self.done:
+            pass
+
+        if self.render_process != None:
+            return_code = self.render_process.poll()
+            if return_code == None:
+                # Process still running.
+                pass
+            elif return_code != 0:
+                # Process returned with an error.
+                if not self.safe_mode:
+                    logging.warning("Render of %s failed. Restarting in safe mode.",
+                                    self.phenotype)
+                    self._start_render_process(safe_mode=True)
+                else:
+                    logging.error("Render of %s failed even in safe mode.", self.phenotype)
+                    if callable(self.on_error): self.on_error()
+                    self.done_with_error = True
+                    self.stop()
+            else:
+                # Process finished successfully.
+                self.render_process = None
+                self._start_gimp_process()
+
+        elif self.gimp_process != None:
+            return_code = self.gimp_process.poll()
+            if return_code == None:
+                # Process still running.
+                pass
+            elif return_code != 0:
+                # Process returned with an error.
+                logging.error("Gimp modification of %s failed even in safe mode.", self.phenotype)
+                if callable(self.on_error): self.on_error()
+                self.done_with_error = True
+                self.stop()
+            else:
+                # Process finished successfully.
+                self.gimp_process = None
+                self.stop()
+
+    def stop(self):
+        if self.render_process != None:
+            self.render_process.terminate()
+        if self.gimp_process != None:
+            self.gimp_process.terminate()
+        self.dev_null.close()
+        self.done = True
+        logging.info("Render job finished (with error = %s)", self.done_with_error)
 
 
 class ImageRenderer:
@@ -18,7 +115,8 @@ class ImageRenderer:
     Don't forget to call `close()` when finished. This will make sure all renders are properly
     terminated.
     """
-    def __init__(self, images_directory, render_executable_path=_DEFAULT_RENDER_EXECUTABLE):
+    def __init__(self, images_directory, render_executable_path=_DEFAULT_RENDER_EXECUTABLE,
+                 gimp_executable_path=_DEFAULT_GIMP_EXECUTABLE):
         self.images_directory = images_directory
         if not os.path.isdir(self.images_directory):
             try:
@@ -31,16 +129,19 @@ class ImageRenderer:
         if not os.path.isfile(self.render_executable):
             raise Exception("Render bash script file {} doesn't exist".format(
                 self.render_executable))
+        self.gimp_executable = gimp_executable_path
+        if not os.path.isfile(self.gimp_executable):
+            raise Exception("Gimp bash script file {} doesn't exist".format(
+                self.gimp_executable))
 
         self.rendered_images = []
         self._check_available_images()
 
-        self.running_procs = []
+        self.running_jobs = []
         self.render_backlog = []
 
     IMAGE_EXTENSION = ".jpg"
-    RENDER_TIMEOUT = 60
-    MAX_PARALLEL_RENDERS = 2
+    MAX_PARALLEL_RENDERS = 1
 
     def _check_available_images(self):
         for directory, subdirectories, filenames in os.walk(self.images_directory):
@@ -52,19 +153,19 @@ class ImageRenderer:
                 # TODO use PIL to check if file is proper JPEG: http://stackoverflow.com/a/266731
                 self.rendered_images.append(os.path.join(directory, filename))
 
-    def _construct_image_path(self, ph):
+    def construct_image_path(self, ph):
         return os.path.join(self.images_directory, "generation{}".format(ph.generation),
                             "{}{}".format(ph.as_string, ImageRenderer.IMAGE_EXTENSION))
 
     def check_image_available(self, ph):
-        return self._construct_image_path(ph) in self.rendered_images
+        return self.construct_image_path(ph) in self.rendered_images
 
     def get_image_path(self, ph):
         """
         Returns image path or None if image is not (yet) rendered.
         """
         if self.check_image_available(ph):
-            return self._construct_image_path(ph)
+            return self.construct_image_path(ph)
         else:
             return None
 
@@ -76,53 +177,44 @@ class ImageRenderer:
         is already running.
         :param ph: Phenotype to render.
         """
-        print("Start render of phenotype " + str(ph.idn))
         if self.check_image_available(ph):
-            print("- image already exists")
+            # Image already exists.
             return False
-        if ph in [ph for ph, proc in self.running_procs]:
-            print("- image already being rendered")
+        if ph in [job.phenotype for job in self.running_jobs]:
+            # Image already being rendered.
             return False
         if self.check_image_renders() < ImageRenderer.MAX_PARALLEL_RENDERS:
-            try:
-                FNULL = open(os.devnull, 'w')
-                # TODO: set render resolution according to fullscreen resolution
-                proc = subprocess.Popen([self.render_executable, ph.as_string,
-                    self._construct_image_path(ph)], stdout=FNULL)
-                        #stderr=subprocess.PIPE
-                self.running_procs.append((ph, proc))
-                print("- process started")
-            except OSError as e:
-                print(str(e))
-                raise
+            job = RenderJob(self, ph)
+            def on_error():
+                # Stillborn phenotype.
+                ph.no = 1000 # TODO: make this more meaningful.
+                # TODO: Count job failures. When a lot of them, try rebooting?
+            job.start(on_error=on_error)
+            self.running_jobs.append(job)
             return True
         else:
-            print("- too many processes running, added to backlog")
+            logging.info("Adding render job of %s to backlog (too many processes currently "
+                         "running).", ph)
             self.render_backlog.append(ph)
             return True
 
     @property
     def is_working(self):
-        return len(self.running_procs) > 0 or len(self.render_backlog) > 0
+        return len(self.running_jobs) > 0 or len(self.render_backlog) > 0
 
     def check_image_renders(self):
         """ Checks the status of background image renders. Returns number of running processes. """
         count = 0
-        for ph, proc in self.running_procs:
-            retcode = proc.poll()
-            if retcode is not None:  # process finished
-                self.running_procs.remove((ph, proc))
-                if retcode != 0:
-                    print("ERROR: Render process failed")
-                    print(proc.stderr)
-                    # TODO: do something about it
-                else:
-                    print("Render process for {} finished successfully.".format(ph))
-                    self.rendered_images.append(self._construct_image_path(ph))
+        for job in self.running_jobs:
+            job.update()
+            if job.done:
+                self.running_jobs.remove(job)
+                if not job.done_with_error:
+                    self.rendered_images.append(self.construct_image_path(job.phenotype))
                 if self.render_backlog:
                     self.start_image_render(self.render_backlog.pop(0))
                     count += 1
-            else:  # process still running
+            else:
                 count += 1
         return count
 
@@ -132,6 +224,6 @@ class ImageRenderer:
 
     def close(self):
         self.render_backlog.clear()
-        for ph, proc in self.running_procs:
-            proc.terminate()
-        self.running_procs.clear()
+        for job in self.running_jobs:
+            job.stop()
+        self.running_jobs.clear()

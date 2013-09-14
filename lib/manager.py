@@ -65,7 +65,7 @@ class Manager:
         elif (self.pop.current_generation_number > self.CONTROL_GROUP_GENERATION and
                 rand < self.CONTROL_GROUP_SHOW_FREQUENCY + self.OLD_WINNERS_SHOW_FREQUENCY):
             # Show the 'control group' generation used to gauge progress.
-            return random.choice(self.pop.get_generation(self.CONTROL_GROUP_GENERATION))
+            return random.choice(list(self.pop.get_generation(self.CONTROL_GROUP_GENERATION)))
         else:
             # Show a phenotype from the current (latest) generation.
             # Choice algorithm inspired by http://stackoverflow.com/a/14916069.

@@ -7,6 +7,9 @@ import tempfile
 from PIL import Image
 from lib.phenotype import Phenotype
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 __author__ = 'Filip Hracek'
 
 
@@ -35,15 +38,15 @@ class TestImageRenderer(TestCase):
         ph.randomize()
         ph.as_string = "1" * len(ph.as_string)  # set DNA to "1111111...111"
         self.assertFalse(renderer.check_image_available(ph))
-        self.assertEqual(len(renderer.running_procs), 0)
+        self.assertEqual(len(renderer.running_jobs), 0)
         renderer.start_image_render(ph)
-        self.assertEqual(len(renderer.running_procs), 1)
+        self.assertEqual(len(renderer.running_jobs), 1)
         self.assertTrue(renderer.is_working)
         while renderer.is_working:
             time.sleep(0.1)
             renderer.check_image_renders()
         self.assertTrue(renderer.check_image_available(ph))
-        self.assertEqual(len(renderer.running_procs), 0)
+        self.assertEqual(len(renderer.running_jobs), 0)
         renderer.close()
         shutil.rmtree(images_dir)
 
@@ -57,11 +60,9 @@ class TestImageRenderer(TestCase):
         self.assertTrue(renderer.is_working)
         time.sleep(0.1)
         renderer.check_image_renders()
-        ph, proc = renderer.running_procs[0]
+        job = renderer.running_jobs[0]
         self.assertTrue(renderer.is_working)
-        self.assertIsNone(proc.poll())
         renderer.close()
         time.sleep(0.1)
         self.assertFalse(renderer.is_working)
-        self.assertIsNotNone(proc.poll())
         shutil.rmtree(images_dir)
