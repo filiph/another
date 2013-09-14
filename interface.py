@@ -9,6 +9,8 @@ from lib.image_renderer import ImageRenderer
 from lib.manager import Manager
 from lib.slideshow import rationalSizer, tran_none
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 FULLSCREEN = False
 RESOLUTION = (800, 600)
