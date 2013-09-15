@@ -1,4 +1,5 @@
 import random
+import logging
 
 from lib.phenotype import Phenotype
 
@@ -62,22 +63,22 @@ class Population:
                 break
         return ready
 
-    def identify_winners(self):
-        """ Find if there are any winners and act accordingly. """
-        for candidate in self.phenotypes:
-            if self.phenotype_in_one_of_strands(candidate):
-                continue  # Already taken care of.
-            fitness = candidate.get_fitness_from_votes()
-            if (fitness > Population.STRAND_COMPLETE_THRESHOLD):
-                print("- identified a strand winner: " + str(candidate))
-                self.winners.append(candidate)
-                # remove all occurrences of strand
-                count = len(self.phenotypes)
-                self.phenotypes = [ph for ph in self.phenotypes
-                        if ph.get_similarity(candidate) < 1 - Population.STRAND_RANGE]
-                count -= len(self.phenotypes)
-                print("   - deleted " + str(count) + " strand members")
-                # TODO: put new randoms in place of the removed from this generation
+    # def identify_winners(self):
+    #     """ Find if there are any winners and act accordingly. """
+    #     for candidate in self.phenotypes:
+    #         if self.phenotype_in_one_of_strands(candidate):
+    #             continue  # Already taken care of.
+    #         fitness = candidate.get_fitness_from_votes()
+    #         if (fitness > Population.STRAND_COMPLETE_THRESHOLD):
+    #             print("- identified a strand winner: " + str(candidate))
+    #             self.winners.append(candidate)
+    #             # remove all occurrences of strand
+    #             count = len(self.phenotypes)
+    #             self.phenotypes = [ph for ph in self.phenotypes
+    #                     if ph.get_similarity(candidate) < 1 - Population.STRAND_RANGE]
+    #             count -= len(self.phenotypes)
+    #             print("   - deleted " + str(count) + " strand members")
+    #             # TODO: put new randoms in place of the removed from this generation
 
     def phenotype_in_one_of_strands(self, ph):
         for winner in self.winners:
@@ -159,12 +160,11 @@ class Population:
         return child1, child2
 
     def create_new_generation(self):
-        print("Creating a new generation number " + str(self.current_generation_number + 1))
+        logging.info("Creating a new generation number " + str(self.current_generation_number + 1))
         old_generation = list(self.get_current_generation())
         # print("  - old generation")
         # for member in old_generation:
         #     print("    - {0} ({1}/{2})".format(member, member.yes, member.no))
-        print("Mating...")
         self.current_generation_number += 1
         children = []
         for i in range(int(self.generation_size / 2)):

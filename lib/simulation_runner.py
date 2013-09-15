@@ -1,6 +1,7 @@
 __author__ = 'Filip Hracek'
 
 import random
+import logging
 
 def default_objective_function(ph):
     """
@@ -24,7 +25,7 @@ class SimulationRunner:
     def run(self, iterations):
         for i in range(iterations):
             if (i % 100 == 0):
-                print("RUNNER   : Iteration {0}".format(i))
+                logging.info("Iteration {0}".format(i))
             ph = random.choice(list(self.manager.pop.get_current_generation()))
             if random.random() < self.objective_function(ph):
                 ph.yes += 1

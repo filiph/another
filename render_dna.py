@@ -4,6 +4,7 @@
 
 import bpy, bgl, blf, sys, os
 from bpy import data, ops, props, types, context
+import logging
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
@@ -31,7 +32,7 @@ for arg in sys.argv:
     words = arg.split('=')
     if (words[0] == "dna"):
         dna = words[1]
-        print("Found dna arg: {}".format(dna))
+        logging.info("Found dna arg: {}".format(dna))
 
 ph = Phenotype(0)
 if dna == "":
@@ -45,13 +46,13 @@ for arg in sys.argv:
     if (words[0] == "out"):
         path = words[1]
 
-print('Rendering phenotype with dna ' + ph.as_string)
+logging.info('Rendering phenotype with dna ' + ph.as_string)
 
-print('\nPrint Scenes...') 
+#print('\nPrint Scenes...')
 sceneKey = bpy.data.scenes.keys()[0] 
-print('Using Scene['  + sceneKey + ']') 
+logging.info('Using Scene['  + sceneKey + ']')
 
-print("Modifying scene according to DNA")
+logging.info("Modifying scene according to DNA")
 
 if not ph.show_trees.as_bool:
     bpy.data.objects["Tree"].hide_render = True
@@ -61,12 +62,12 @@ bpy.data.objects["plane"].particle_systems["ParticleSystem"].seed = ph.trees_see
 bpy.data.objects["Lamp"].delta_rotation_euler = (0, ph.sun_position.as_relative_value * 0.5, 0)
 
 # Loop all objects and try to find Cameras 
-print('Looping Cameras') 
+logging.info('Looping Cameras')
 c=0 
 for obj in bpy.data.objects: 
     # Find cameras that match cameraNames 
     if ( obj.type =='CAMERA') and ( cameraNames == '' or obj.name.find(cameraNames) != -1) : 
-      print("Rendering scene["+sceneKey+"] with Camera["+obj.name+"]") 
+      logging.info("Rendering scene["+sceneKey+"] with Camera["+obj.name+"]")
 
       # Set Scenes camera and output filename 
       bpy.data.scenes[sceneKey].camera = obj 
@@ -76,4 +77,4 @@ for obj in bpy.data.objects:
       # Render Scene and store the scene 
       bpy.ops.render.render( write_still=True ) 
       c = c + 1 
-print('Done!')
+logging.info('Done!')

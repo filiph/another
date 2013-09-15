@@ -122,8 +122,8 @@ class ImageRenderer:
             try:
                 os.makedirs(self.images_directory)
             except IOError:
-                print("ERROR: Images directory {} doesn't exist and couldn't be created.".format(
-                    self.images_directory))
+                logging.error("Images directory %s doesn't exist and couldn't be created.",
+                              self.images_directory)
                 raise
         self.render_executable = render_executable_path
         if not os.path.isfile(self.render_executable):

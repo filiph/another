@@ -3,6 +3,8 @@ import pickle
 import sqlite3
 from lib.population import *
 
+import logging
+
 class ManagerHistory:
     pass # TODO: save votes to persistent storage, one row/vote at a time
 
@@ -96,8 +98,7 @@ class Manager:
             with open(path, "wb") as f:
                 pickle.dump(self.__dict__, f)
         except IOError:
-            print("ERROR: Couldn't write state to file {}.".format(path))
-            raise
+            logging.error("Couldn't write state to file {}.".format(path))
 
     def load(self, path=None):
         if path is None:
@@ -106,8 +107,7 @@ class Manager:
             with open(path, "rb") as f:
                 tmp_dict = pickle.load(f)
         except IOError:
-            print("ERROR: Save file {} not found.".format(path))
-            raise
+            logging.error("Save file {} not found.".format(path))
 
         self.__dict__.update(tmp_dict)
 
@@ -133,7 +133,7 @@ class Manager:
         #     print(nn_pattern)
         #     self.nn_train_set.append(nn_pattern)
 
-        print("TEST     : Creating new generation ({0})".format(self.pop.current_generation_number + 1))
+        logging.info("Creating new generation ({0})".format(self.pop.current_generation_number + 1))
         new_generation = self.pop.create_new_generation()
         # TODO: involve neural network in selecting from children
         # TODO: ressurect old-time winners

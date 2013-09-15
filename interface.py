@@ -31,7 +31,7 @@ class Interface:
                 all_images_ready = False
 
         if not all_images_ready:
-            print("Waiting for render of all images first.")
+            logging.info("Waiting for render of all images first.")
             self.renderer.wait_until_done()
 
     CHECK_INTERVAL = 1
@@ -82,7 +82,7 @@ class Interface:
             pygame.time.wait(20)  # let the processor chill for a bit
 
     def show_phenotype_image(self, ph):
-        print("Showing phenotype {}".format(ph))
+        logging.info("Showing phenotype %s.", ph)
         blitdata = rationalSizer(pygame.image.load(self.renderer.get_image_path(ph)),
                                  self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
