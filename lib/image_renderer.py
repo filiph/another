@@ -104,6 +104,10 @@ class RenderJob:
             self.render_process.terminate()
         if self.gimp_process != None:
             self.gimp_process.terminate()
+            try:
+                os.remove(self.ctx.construct_image_path(self.phenotype))
+            except OSError:
+                pass
         self.dev_null.close()
         self.done = True
         logger.info("Render job finished (with error = %s)", self.done_with_error)
