@@ -9,6 +9,7 @@ class Population:
                  shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10):
         # TODO: organize phenotypes into generation arrays - then construct .phenotypes using a
         #       generator
+        # TODO: save phenotypes to sqlite database periodically, don't keep everything in memory
         self.phenotypes = []
         self.winners = []
         self.current = None # TODO: XXX
