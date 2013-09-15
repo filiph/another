@@ -110,7 +110,7 @@ class Interface:
             pygame.time.wait(20)  # let the processor chill for a bit
 
     def show_phenotype_image(self, ph):
-        logger.info("Showing phenotype %s.", ph)
+        logger.debug("Showing phenotype %s.", ph)
         blitdata = rationalSizer(pygame.image.load(self.renderer.get_image_path(ph)),
                                  self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)
