@@ -1,21 +1,17 @@
 import os
 import pickle
-import sqlite3
 from lib.population import *
+
+from lib.vote_history_manager import VoteHistoryManager
 
 import logging
 logger = logging.getLogger("another.manager")
 
-class ManagerHistory:
-    pass # TODO: save votes to persistent storage, one row/vote at a time
-
-class ManagerHistorySQLite(ManagerHistory):
-    pass # TODO: Implement ManagerHistory as SQLite
-
 class Manager:
     """ Class manages the evolution, tracks state of the population, etc. """
     def __init__(self, size=20, crossover_probability=0.7, shared_fitness_sigma=0.05,
-                 shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10, directory=os.getcwd()):
+                 shared_fitness_alpha=1, mutation_rate=0.05, min_votes=10, directory=os.getcwd(),
+                 vote_history=None):
         self.pop = None
         self.pop_size = size
         self.crossover_probability = crossover_probability
@@ -30,6 +26,11 @@ class Manager:
         self.images_directory = os.path.join(self.root_directory, "images", "")
 
         self.current_phenotype = None
+
+        if vote_history:
+            self.vote_history = vote_history
+        else:
+            self.vote_history = VoteHistoryManager()
 
     def create_from_scratch(self):
         """ Starts or re-starts population from scratch. """
@@ -58,6 +59,18 @@ class Manager:
     OLD_WINNERS_SHOW_FREQUENCY = 0.2
     CONTROL_GROUP_SHOW_FREQUENCY = 0.1
     CONTROL_GROUP_GENERATION = 5
+
+    def yes_to_current_phenotype(self):
+        self.current_phenotype.yes += 1
+        self.vote_history.emit(self.current_phenotype, VoteHistoryManager.YES)
+
+    def no_to_current_phenotype(self):
+        self.current_phenotype.no += 1
+        self.vote_history.emit(self.current_phenotype, VoteHistoryManager.NO)
+
+    def meh_to_current_phenotype(self):
+        self.current_phenotype.meh += 1
+        self.vote_history.emit(self.current_phenotype, VoteHistoryManager.MEH)
 
     def _pick_random(self):
         rand = random.random()
@@ -88,7 +101,7 @@ class Manager:
 
 
     def close(self):
-        pass
+        self.vote_history.close()
 
     _DEFAULT_SAVE_FILE_NAME = "manager_state.dump"
 
@@ -107,8 +120,9 @@ class Manager:
         try:
             with open(path, "rb") as f:
                 tmp_dict = pickle.load(f)
-        except IOError:
+        except IOError as e:
             logger.error("Save file {} not found.".format(path))
+            raise e
 
         self.__dict__.update(tmp_dict)
 

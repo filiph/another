@@ -7,6 +7,7 @@ from pygame import *
 
 from lib.image_renderer import ImageRenderer
 from lib.manager import Manager
+from lib.vote_history_manager import VoteHistoryManager
 from lib.slideshow import rationalSizer, tran_none
 
 import logging
@@ -76,14 +77,13 @@ class Interface:
                     pygame.quit()
                     return 0
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_y:
-                    #TODO: save votes via manager
-                    self.manager.current_phenotype.yes += 1
+                    self.manager.yes_to_current_phenotype()
                     self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-                    self.manager.current_phenotype.no += 1
+                    self.manager.no_to_current_phenotype()
                     self.show_next()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    self.manager.current_phenotype.meh += 1
+                    self.manager.meh_to_current_phenotype()
                     self.show_next()
                 elif event.type == self.CHECK_USER_EVENT:
                     self.renderer.check_image_renders()
@@ -107,7 +107,7 @@ class Interface:
         self.show_phenotype_image(ph)
 
 if __name__ == '__main__':
-    manager = Manager(size=5, min_votes=5, directory=os.getcwd())
+    manager = Manager(size=5, min_votes=5, directory=os.getcwd(), vote_history=VoteHistoryManager())
     try:
         manager.load()
     except IOError:
