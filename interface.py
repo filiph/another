@@ -10,7 +10,22 @@ from lib.manager import Manager
 from lib.slideshow import rationalSizer, tran_none
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+import logging.handlers
+
+# create logger
+logger = logging.getLogger("another")
+logger.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+# create file handler and set level to info
+fh = logging.handlers.TimedRotatingFileHandler("interface.log", when="D", interval=1)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 FULLSCREEN = False
 RESOLUTION = (800, 600)
@@ -31,7 +46,7 @@ class Interface:
                 all_images_ready = False
 
         if not all_images_ready:
-            logging.info("Waiting for render of all images first.")
+            logger.info("Waiting for render of all images first.")
             self.renderer.wait_until_done()
 
     CHECK_INTERVAL = 1
@@ -82,7 +97,7 @@ class Interface:
             pygame.time.wait(20)  # let the processor chill for a bit
 
     def show_phenotype_image(self, ph):
-        logging.info("Showing phenotype %s.", ph)
+        logger.info("Showing phenotype %s.", ph)
         blitdata = rationalSizer(pygame.image.load(self.renderer.get_image_path(ph)),
                                  self.resolution)
         self.main_surface = tran_none(self.main_surface, blitdata)

@@ -1,5 +1,6 @@
 import random
 import logging
+logger = logging.getLogger("another.population")
 
 from lib.phenotype import Phenotype
 
@@ -160,7 +161,7 @@ class Population:
         return child1, child2
 
     def create_new_generation(self):
-        logging.info("Creating a new generation number " + str(self.current_generation_number + 1))
+        logger.info("Creating a new generation number " + str(self.current_generation_number + 1))
         old_generation = list(self.get_current_generation())
         # print("  - old generation")
         # for member in old_generation:

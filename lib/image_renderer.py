@@ -4,6 +4,7 @@ from PIL import Image
 import time
 
 import logging
+logger = logging.getLogger("another.image_renderer")
 
 __author__ = 'Filip Hracek'
 
@@ -34,24 +35,24 @@ class RenderJob:
         self.safe_mode = safe_mode
         try:
             # TODO: set render resolution according to fullscreen resolution
-            logging.info("Starting render process for %s.", self.phenotype)
+            logger.info("Starting render process for %s.", self.phenotype)
             self.render_process = subprocess.Popen(
                 [self.ctx.render_executable, self.phenotype.as_string,
                  self.ctx.construct_image_path(self.phenotype)], stdout=self.dev_null)
         except OSError as e:
-            logging.error("Render process for %s failed: %s", self.phenotype, e)
+            logger.error("Render process for %s failed: %s", self.phenotype, e)
             if callable(self.on_error): self.on_error()
             self.done_with_error = True
             self.stop()
 
     def _start_gimp_process(self):
         try:
-            logging.info("Starting gimp process for %s.", self.phenotype)
+            logger.info("Starting gimp process for %s.", self.phenotype)
             self.gimp_process = subprocess.Popen(
                 [self.ctx.gimp_executable, self.ctx.construct_image_path(self.phenotype)],
                 stdout=self.dev_null)
         except OSError as e:
-            logging.error("Gimp process for %s failed: %s", self.phenotype, e)
+            logger.error("Gimp process for %s failed: %s", self.phenotype, e)
             if callable(self.on_error): self.on_error()
             self.done_with_error = True
             self.stop()
@@ -69,11 +70,11 @@ class RenderJob:
             elif return_code != 0:
                 # Process returned with an error.
                 if not self.safe_mode:
-                    logging.warning("Render of %s failed. Restarting in safe mode.",
+                    logger.warning("Render of %s failed. Restarting in safe mode.",
                                     self.phenotype)
                     self._start_render_process(safe_mode=True)
                 else:
-                    logging.error("Render of %s failed even in safe mode.", self.phenotype)
+                    logger.error("Render of %s failed even in safe mode.", self.phenotype)
                     if callable(self.on_error): self.on_error()
                     self.done_with_error = True
                     self.stop()
@@ -89,7 +90,7 @@ class RenderJob:
                 pass
             elif return_code != 0:
                 # Process returned with an error.
-                logging.error("Gimp modification of %s failed even in safe mode.", self.phenotype)
+                logger.error("Gimp modification of %s failed even in safe mode.", self.phenotype)
                 if callable(self.on_error): self.on_error()
                 self.done_with_error = True
                 self.stop()
@@ -105,7 +106,7 @@ class RenderJob:
             self.gimp_process.terminate()
         self.dev_null.close()
         self.done = True
-        logging.info("Render job finished (with error = %s)", self.done_with_error)
+        logger.info("Render job finished (with error = %s)", self.done_with_error)
 
 
 class ImageRenderer:
@@ -122,7 +123,7 @@ class ImageRenderer:
             try:
                 os.makedirs(self.images_directory)
             except IOError:
-                logging.error("Images directory %s doesn't exist and couldn't be created.",
+                logger.critical("Images directory %s doesn't exist and couldn't be created.",
                               self.images_directory)
                 raise
         self.render_executable = render_executable_path
@@ -193,7 +194,7 @@ class ImageRenderer:
             self.running_jobs.append(job)
             return True
         else:
-            logging.info("Adding render job of %s to backlog (too many processes currently "
+            logger.info("Adding render job of %s to backlog (too many processes currently "
                          "running).", ph)
             self.render_backlog.append(ph)
             return True
