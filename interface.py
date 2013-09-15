@@ -10,6 +10,8 @@ from lib.manager import Manager
 from lib.vote_history_manager import VoteHistoryManager
 from lib.slideshow import rationalSizer, tran_none
 
+import random
+
 import logging
 import logging.handlers
 
@@ -31,6 +33,7 @@ logger.addHandler(fh)
 FULLSCREEN = False
 RESOLUTION = (800, 600)
 PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
+MONKEY_TESTING = True
 
 class Interface:
     def __init__(self, manager, renderer, fullscreen=FULLSCREEN, resolution=RESOLUTION):
@@ -52,8 +55,9 @@ class Interface:
 
     CHECK_INTERVAL = 1
     CHECK_USER_EVENT = pygame.USEREVENT + 1
+    MONKEY_TESTING_EVENT = pygame.USEREVENT + 2
 
-    def run(self):
+    def run(self, monkey_testing=False):
         # Initialize PyGame
         pygame.display.init()
         if self.fullscreen:
@@ -64,6 +68,9 @@ class Interface:
         pygame.display.update()
 
         pygame.time.set_timer(self.CHECK_USER_EVENT, self.CHECK_INTERVAL * 1000)
+
+        if monkey_testing:
+            pygame.time.set_timer(self.MONKEY_TESTING_EVENT, 50)
 
         self.show_next()
 
@@ -93,6 +100,12 @@ class Interface:
                             self.renderer.start_image_render(ph)
                     # TODO: if idle, call Manager.parallelComputation() - creates 'Australia'
                     #       phenotypes that can be shown and voted for.
+                elif event.type == self.MONKEY_TESTING_EVENT:
+                    key = random.choice([pygame.K_y, pygame.K_n])
+                    try:
+                        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, {'key': key}))
+                    except pygame.error as e:
+                        logger.error("Monkey testing error: %s", e)
 
             pygame.time.wait(20)  # let the processor chill for a bit
 
@@ -115,4 +128,4 @@ if __name__ == '__main__':
     renderer = ImageRenderer(os.path.join(os.getcwd(), "images"))
 
     interface = Interface(manager, renderer)
-    interface.run()
+    interface.run(monkey_testing=MONKEY_TESTING)
