@@ -6,13 +6,14 @@
 2) Check out code from here (git).
 3) Copy `gimp/apply-painting.scm` file to the Gimp plugins directory. (It ought to be `~/.gimp-2.x/scripts` on Unix and `~/Library/Application Support/GIMP/2.x/plug-ins` on Mac.)
 4) Put `gimp/gimpressionist_preset` to gimpressionist Preset directory.
+5) Create a `config.sh` configuration file and fill in your machine's path details. (You can start with `config_sample.sh`.)
 
 
 ## Run
 
 To run, execute this on the command line:
 
-    python3 runner.py
+    python3 interface.py
 
 This will make the first generation of phenotypes and start the voting
 process, showing each phenotype. Use `y` and `n` to vote, `space` to
