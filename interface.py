@@ -28,6 +28,7 @@ logger.addHandler(ch)
 # create file handler and set level to info
 fh = logging.handlers.TimedRotatingFileHandler("interface.log", when="D", interval=1)
 fh.setFormatter(formatter)
+fh.setLevel(logging.INFO)
 logger.addHandler(fh)
 
 FULLSCREEN = True
