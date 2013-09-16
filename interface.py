@@ -30,7 +30,7 @@ fh = logging.handlers.TimedRotatingFileHandler("interface.log", when="D", interv
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
-FULLSCREEN = False
+FULLSCREEN = True
 RESOLUTION = (800, 600)
 PATH_TO_SCRIPT = os.path.dirname(os.path.realpath(__file__))
 MONKEY_TESTING = True
@@ -70,7 +70,7 @@ class Interface:
         pygame.time.set_timer(self.CHECK_USER_EVENT, self.CHECK_INTERVAL * 1000)
 
         if monkey_testing:
-            pygame.time.set_timer(self.MONKEY_TESTING_EVENT, 50)
+            pygame.time.set_timer(self.MONKEY_TESTING_EVENT, 500)
 
         self.show_next()
 
