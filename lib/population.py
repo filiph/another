@@ -12,7 +12,6 @@ class Population:
         # TODO: save phenotypes to sqlite database periodically, don't keep everything in memory
         self.phenotypes = []
         self.winners = []
-        self.current = None # TODO: XXX
         self.current_generation_number = -1
         self.latest_idn = 0
 
