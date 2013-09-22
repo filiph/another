@@ -2,6 +2,8 @@ import os
 import subprocess
 from PIL import Image
 import time
+import datetime
+
 
 import logging
 logger = logging.getLogger("another.image_renderer")
@@ -12,7 +14,7 @@ _DEFAULT_RENDER_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../
 _DEFAULT_GIMP_EXECUTABLE = os.path.dirname(os.path.realpath(__file__)) + "/../apply_painting.sh"
 
 class RenderJob:
-    RENDER_TIMEOUT = 5 * 60 # TODO: implement timeout
+    RENDER_TIMEOUT = datetime.timedelta(minutes=5)
 
     def __init__(self, ctx, phenotype):
         self.phenotype = phenotype
@@ -29,6 +31,7 @@ class RenderJob:
     def start(self, on_error=None):
         self.dev_null = open(os.devnull, 'w')
         self.on_error = on_error
+        self.start_datetime = datetime.datetime.now()
         self._start_render_process()
 
     def _start_render_process(self, safe_mode=False):
@@ -60,15 +63,19 @@ class RenderJob:
 
     def update(self):
         if self.done:
-            pass
+            return
+
+        past_timeout = datetime.datetime.now() - self.start_datetime > self.RENDER_TIMEOUT
+        if past_timeout:
+            logger.warning("RenderJob of %s is taking too long. Stopping.", self.phenotype)
 
         if self.render_process != None:
             return_code = self.render_process.poll()
-            if return_code == None:
+            if return_code == None and not past_timeout:
                 # Process still running.
                 pass
-            elif return_code != 0:
-                # Process returned with an error.
+            elif return_code != 0 or past_timeout:
+                # Process returned with an error or is running too long.
                 if not self.safe_mode:
                     logger.warning("Render of %s failed. Restarting in safe mode.",
                                     self.phenotype)
@@ -85,12 +92,12 @@ class RenderJob:
 
         elif self.gimp_process != None:
             return_code = self.gimp_process.poll()
-            if return_code == None:
+            if return_code == None and not past_timeout:
                 # Process still running.
                 pass
-            elif return_code != 0:
-                # Process returned with an error.
-                logger.error("Gimp modification of %s failed even in safe mode.", self.phenotype)
+            elif return_code != 0 or past_timeout:
+                # Process returned with an error or is running too long.
+                logger.error("Gimp modification of %s failed.", self.phenotype)
                 if callable(self.on_error): self.on_error()
                 self.done_with_error = True
                 self.stop()
@@ -101,16 +108,29 @@ class RenderJob:
 
     def stop(self):
         if self.render_process != None:
-            self.render_process.terminate()
+            self._terminate(self.render_process)
+            self.render_process = None
         if self.gimp_process != None:
-            self.gimp_process.terminate()
+            self._terminate(self.gimp_process)
+            self.gimp_process = None
+        if self.done_with_error:
+            logger.info("Removing image for %s", self.phenotype)
             try:
                 os.remove(self.ctx.construct_image_path(self.phenotype))
-            except OSError:
-                pass
+            except OSError as e:
+                logger.error("Couldn't remove non-gimped file because of IO error: %s", e)
         self.dev_null.close()
         self.done = True
-        logger.info("Render job finished (with error = %s)", self.done_with_error)
+        logger.info("Render job finished (%s error)", "with" if self.done_with_error else
+        "without")
+
+    def _terminate(self, process):
+        logger.info("Terminating process.")
+        process.terminate()
+        while process.poll() == None:
+            time.sleep(0.1)
+        logger.info("Process has terminated.")
+
 
 
 class ImageRenderer:
