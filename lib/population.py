@@ -45,13 +45,13 @@ class Population:
 
     BEST_PICK_RANDOMNESS_FACTOR = 0.0
 
-    def get_best(self, num, randomness=BEST_PICK_RANDOMNESS_FACTOR):
-        def get_score(ph):
-            # can get old ones without any yes/no histroy
-            if ph.yes + ph.no == 0: return 0.0
-            return (ph.yes - ph.no) / float(ph.yes + ph.no) + \
-                    (random.random() - 0.5) * randomness
-        return sorted(self.phenotypes, key=get_score, reverse=True)[:num] # TODO: use nlargest
+    # def get_best(self, num, randomness=BEST_PICK_RANDOMNESS_FACTOR):
+    #     def get_score(ph):
+    #         # can get old ones without any yes/no histroy
+    #         if ph.yes + ph.no == 0: return 0.0
+    #         return (ph.yes - ph.no) / float(ph.yes + ph.no) + \
+    #                 (random.random() - 0.5) * randomness
+    #     return sorted(self.phenotypes, key=get_score, reverse=True)[:num] # TODO: use nlargest
 
     def is_ready_for_next_generation(self):
         gen = self.get_current_generation()
