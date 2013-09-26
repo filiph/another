@@ -15,4 +15,5 @@ notes/
 .idea
 config.sh
 interface.log
+interface.log.*
 vote_history.db
